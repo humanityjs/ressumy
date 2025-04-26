@@ -5,6 +5,7 @@ import Login from '@/pages/auth/Login';
 import SignUp from '@/pages/auth/SignUp';
 import EditorPage from '@/pages/editor/EditorPage';
 import Home from '@/pages/home/Home';
+import TemplatePage from '@/pages/templates/TemplatePage';
 import UploadPage from '@/pages/upload/UploadPage';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
       {
         path: 'about',
         element: <About />,
+      },
+      {
+        path: 'templates',
+        element: <TemplatePage />,
       },
       {
         path: 'editor',

@@ -43,7 +43,7 @@ function Home() {
             <Button
               size="lg"
               className="w-full sm:w-auto"
-              onClick={() => (window.location.href = '/editor')}
+              onClick={() => (window.location.href = '/templates')}
             >
               <FileText className="mr-2 h-5 w-5" />
               Get Started
