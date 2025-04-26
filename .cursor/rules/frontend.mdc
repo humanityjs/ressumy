@@ -1,0 +1,146 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Frontend Rules
+
+Rules specific to the Résumé Creator frontend application.
+
+Always start your reply with ⚡️ emoji
+
+## Tech Stack
+
+- **Framework**: React 19 with TypeScript
+- **Bundler**: Vite for fast development and production builds
+- **Styling**: Tailwind CSS for utility-first styling
+- **UI Components**: shadcn/ui for accessible, customizable components
+- **Icons**: lucide-react for consistent iconography
+- **Form Handling**: react-hook-form with Yup validation
+- **State Management**: Zustand for lightweight global state
+- **Data Storage**:
+  - localStorage for autosaving drafts
+  - IndexedDB via idb-keyval for caching templates
+  - JSON import/export for résumé portability
+- **PDF Generation**: html2pdf.js for client-side PDF creation
+- **LLM Integration**: @mlc-ai/web-llm with llama.cpp-WASM fallback for on-device text processing
+- **Animations**: react-motion for smooth interactions and transitions
+
+## Design System
+
+### Theme Configuration
+
+- **Dark Mode Default**: Application must default to dark mode
+- **Theme Toggle**: Must provide easy theme toggle functionality
+- **Theme Support**: Every component and text element must support both dark and light themes
+- **Color Palette**:
+  - Base Color: Use 'zinc' as the base color for shadcn/ui components
+  - Contrast Standards: Color contrast must meet WCAG AA standards
+  - Accent Colors: Use minimal but impactful accent colors
+  - Theme Colors: All colors must have appropriate dark/light variants
+
+### UI Components
+
+- **shadcn/ui Components**: Leverage existing shadcn/ui components before creating custom ones
+- **Lucide Icons**: Use lucide-react for icons consistently throughout the application
+- **Custom Styling**: Keep custom styling minimal, prefer Tailwind utility classes
+- **Theme Support**: All custom components must include dark mode variants
+
+### Animations
+
+- **Animation Library**: Use react-motion for complex animations and transitions
+- **Transition Timing**: Transitions should be 200-300ms with ease-in-out timing
+- **Dark Mode Effects**: Use subtle glow/neon effects in dark mode
+- **Motion Requirements**:
+  - Every interactive element must have hover/focus states with motion
+  - Page transitions must use react-motion for smooth navigation
+  - Modal/dialog components must animate in/out using spring animations
+  - List items should animate with staggered effects
+  - Loading states should use motion for better UX
+- **Animation Performance**:
+  - Use transform and opacity for animations to maintain performance
+  - Support reduced motion preferences
+  - Ensure animations are smooth on all devices
+- **Animation Types**:
+  - Card lifts on hover and focus
+  - Spring animations for modals and drawers
+  - Staggered animations for list items and form fields
+  - Subtle hover animations for interactive elements
+  - Loading state animations for data processing
+
+### Typography
+
+- **Font Sizes**: Use readable font sizes throughout
+- **Font Family**: Use Geist font family for consistency
+- **Theme Support**: Text colors must adapt to dark/light themes
+- **Motion**: Text transitions should be smooth when theme changes
+
+## Résumé Templates
+
+- **Template Structure**: JSON schema defining sections, fields, and validation rules
+- **Field Types**: Support for text, textarea, date, select, bullets, and custom field types
+- **Validation**: Yup schemas for field-level validation
+- **Sections**: Common résumé sections (education, experience, skills, etc.) with customizable order
+- **Templates**: Multiple résumé templates with different layouts and styling
+
+## Component Usage
+
+Guidelines for using shadcn/ui components:
+
+- **Component CLI**: Use `npx shadcn@latest add [component-name]` to add new components
+- **Component Customization**: Components can be customized after adding them to your project
+- **Form Components**: Use shadcn/ui form components with React Hook Form for all forms
+- **Motion Integration**: Add react-motion animations to enhance component interactions
+- **Theme Support**: Ensure all customizations maintain dark/light theme compatibility
+
+## Naming Conventions
+
+- **Component Files**: Use PascalCase for component file names (e.g., `ResumeEditor.tsx`, `TemplateSelector.tsx`)
+- **Component Functions**: Use PascalCase for component function names (e.g., `ResumeEditor`, `TemplateSelector`)
+- **Page Files**: Use PascalCase for page file names (e.g., `EditorPage.tsx`, `PreviewPage.tsx`)
+- **Hooks**: All hooks should be in @/hooks directory with useX naming convention
+- **Stores**: Zustand stores should be in @/stores directory with proper typing
+- **Page Folders**: Each page should have its own folder in the pages directory with the following structure:
+  ```
+  src/pages/
+  ├── editor/
+  │   ├── components/     # Page-specific components
+  │   ├── hooks/          # Editor-specific hooks
+  │   └── EditorPage.tsx  # Main page component
+  ├── preview/
+  │   ├── components/
+  │   ├── hooks/
+  │   └── PreviewPage.tsx
+  ```
+
+## State Management
+
+State management and data storage rules:
+
+- **Zustand Store**: Use Zustand for resume data and app state
+- **localStorage**: Implement autosave to localStorage for draft persistence
+- **IndexedDB**: Use idb-keyval for caching template files
+- **Import/Export**: Support JSON import/export of complete résumé data
+- **Type Safety**: All state must be fully typed with TypeScript
+- **Selective Updates**: Implement selective update patterns to prevent unnecessary re-renders
+
+## LLM Integration
+
+Guidelines for on-device LLM integration:
+
+- **Text Improvement**: Implement "polish my bullet" feature using the local LLM
+- **Privacy-First**: All processing must happen on-device without server calls
+- **Loading States**: Show clear loading states during text processing
+- **Fallback Mechanism**: Implement fallback to llama.cpp-WASM if @mlc-ai/web-llm fails
+- **Model Size**: Optimize for model size vs. quality tradeoff
+
+## Performance
+
+Frontend performance requirements:
+
+- **On-Device Processing**: All data processing and PDF generation happens client-side
+- **Bundle Size**: Implement code splitting to minimize initial load size
+- **Image Optimization**: Any images must be optimized and lazy loaded
+- **LLM Loading**: Load LLM models on-demand and show clear progress indicators
+- **Animation Performance**: Ensure animations don't impact page performance
+- **Offline Support**: Application should function offline after initial load
