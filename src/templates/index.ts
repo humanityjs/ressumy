@@ -119,6 +119,12 @@ const basicTemplate: Template = {
           type: 'textarea',
           placeholder: 'Describe your responsibilities and achievements...',
         },
+        {
+          id: 'keyResponsibilities',
+          label: 'Key Responsibilities',
+          type: 'bullets',
+          placeholder: 'Add key responsibilities as bullet points...',
+        },
       ],
     },
     {

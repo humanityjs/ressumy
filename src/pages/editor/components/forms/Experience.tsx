@@ -19,6 +19,7 @@ import { TemplateSection } from '@/templates';
 import { PlusCircle, Trash2, ZapIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { UseFormReturn } from 'node_modules/react-hook-form/dist/types/form';
+import { useEffect, useRef } from 'react';
 
 const springConfig = { stiffness: 300, damping: 30 };
 
@@ -37,6 +38,42 @@ function Experience({
   removeExperience: (id: string) => void;
   updateExperience: (id: string, data: Partial<ExtendedExperience>) => void;
 }) {
+  const textareaRefs = useRef<Map<string, HTMLTextAreaElement[]>>(new Map());
+
+  // Adjust height of textareas when they first render or when content changes
+  useEffect(() => {
+    // Give a small delay to ensure the DOM is fully rendered
+    const timeoutId = setTimeout(() => {
+      textareaRefs.current.forEach((textareas) => {
+        textareas.forEach((textarea) => {
+          if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+          }
+        });
+      });
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [resumeData.experiences]);
+
+  // Function to register and keep track of textarea refs
+  const registerTextareaRef = (
+    experienceId: string,
+    index: number,
+    element: HTMLTextAreaElement | null
+  ) => {
+    if (!element) return;
+
+    if (!textareaRefs.current.has(experienceId)) {
+      textareaRefs.current.set(experienceId, []);
+    }
+
+    const refs = textareaRefs.current.get(experienceId) || [];
+    refs[index] = element;
+    textareaRefs.current.set(experienceId, refs);
+  };
+
   return (
     <div key={section.id} className="space-y-4">
       <div className="flex justify-between items-center">
@@ -204,6 +241,140 @@ function Experience({
                           >
                             <ZapIcon className="h-3 w-3 mr-1" />
                             Polish bullet
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+
+            {section.fields
+              .filter((f) => f.id === 'keyResponsibilities')
+              .map((field) => (
+                <FormField
+                  key={field.id}
+                  control={form.control}
+                  name={`experiences.${index}.keyResponsibilities` as FormPath}
+                  render={({ field: formField }) => (
+                    <FormItem className="mt-4">
+                      <FormLabel className="flex items-center">
+                        {field.label}
+                        {field.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="space-y-2">
+                          {(experience.keyResponsibilities || []).map(
+                            (responsibility, respIndex) => (
+                              <div key={respIndex} className="flex gap-2">
+                                <div className="flex-1 relative">
+                                  <Textarea
+                                    placeholder={`Responsibility ${
+                                      respIndex + 1
+                                    }`}
+                                    value={responsibility || ''}
+                                    onChange={(e) => {
+                                      const newResponsibilities = [
+                                        ...(experience.keyResponsibilities ||
+                                          []),
+                                      ];
+                                      newResponsibilities[respIndex] =
+                                        e.target.value;
+                                      formField.onChange(newResponsibilities);
+                                      updateExperience(experience.id, {
+                                        keyResponsibilities:
+                                          newResponsibilities,
+                                      });
+                                    }}
+                                    className="w-full py-2 min-h-0 resize-none overflow-hidden transition-all"
+                                    style={{
+                                      height: 'auto',
+                                      minHeight: '38px',
+                                    }}
+                                    onInput={(e) => {
+                                      const target =
+                                        e.target as HTMLTextAreaElement;
+                                      target.style.height = 'auto';
+                                      target.style.height = `${Math.max(
+                                        38,
+                                        target.scrollHeight
+                                      )}px`;
+                                    }}
+                                    ref={(el) =>
+                                      registerTextareaRef(
+                                        experience.id,
+                                        respIndex,
+                                        el
+                                      )
+                                    }
+                                  />
+                                  <div className="flex justify-end mt-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
+                                      type="button"
+                                      onClick={() => {
+                                        /* LLM enhancement will be added later */
+                                      }}
+                                    >
+                                      <ZapIcon className="h-3 w-3 mr-1" />
+                                      Polish bullet
+                                    </Button>
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() => {
+                                    const newResponsibilities = (
+                                      experience.keyResponsibilities || []
+                                    ).filter((_, i) => i !== respIndex);
+                                    formField.onChange(newResponsibilities);
+                                    updateExperience(experience.id, {
+                                      keyResponsibilities: newResponsibilities,
+                                    });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const newResponsibilities = [
+                                ...(experience.keyResponsibilities || []),
+                                '',
+                              ];
+                              formField.onChange(newResponsibilities);
+                              updateExperience(experience.id, {
+                                keyResponsibilities: newResponsibilities,
+                              });
+
+                              // Focus the new textarea after it's rendered
+                              setTimeout(() => {
+                                const newIndex = (
+                                  experience.keyResponsibilities || []
+                                ).length;
+                                const textareas =
+                                  textareaRefs.current.get(experience.id) || [];
+                                if (textareas[newIndex]) {
+                                  textareas[newIndex].focus();
+                                }
+                              }, 100);
+                            }}
+                            className="mt-2 w-full flex items-center justify-center text-sm hover:bg-accent"
+                          >
+                            <PlusCircle className="h-4 w-4 mr-2" />
+                            Add Responsibility
                           </Button>
                         </div>
                       </FormControl>

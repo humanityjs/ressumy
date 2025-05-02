@@ -57,6 +57,7 @@ export function ResumeForm({ template }: ResumeFormProps) {
       startDate: '',
       endDate: '',
       description: '',
+      keyResponsibilities: [],
     };
     addExperience(newExperience);
   };

@@ -65,6 +65,10 @@ export const experienceSchema = yup.object({
   current: yup.boolean().default(false),
   description: yup.string().optional(),
   highlights: yup.array().of(yup.string().optional()).default([]),
+  keyResponsibilities: yup
+    .array()
+    .of(yup.string().required('Responsibility cannot be empty'))
+    .default([]),
 });
 
 // Education Schema
