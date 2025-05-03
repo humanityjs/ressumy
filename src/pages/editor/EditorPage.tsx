@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { useResumeStore } from '@/stores/resumeStore';
 import { getTemplateById, Template, templates } from '@/templates';
+import html2canvas from 'html2canvas-pro';
+import jsPDF from 'jspdf';
 import { Download, Save } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ResumeForm } from './components/forms/ResumeForm';
 
@@ -11,6 +13,8 @@ function EditorPage() {
   const location = useLocation();
   const [template, setTemplate] = useState<Template | undefined>();
   const resumeData = useResumeStore((state) => state.resumeData);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Parse the template ID from the URL query string
   useEffect(() => {
@@ -30,6 +34,66 @@ function EditorPage() {
       navigate('/templates');
     }
   }, [location.search, navigate]);
+
+  const exportPDF = async () => {
+    if (!previewRef.current) return;
+
+    try {
+      setIsExporting(true);
+
+      // Create a clone of the preview content to maintain the original DOM
+      const element = previewRef.current.cloneNode(true) as HTMLElement;
+
+      // Create a temporary container
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.width = '8.5in'; // Letter width
+      container.style.background = 'white';
+
+      // Add the element to the temporary container
+      container.appendChild(element);
+      document.body.appendChild(container);
+
+      // Configure html2canvas options
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher scale for better quality
+        logging: false,
+        useCORS: true,
+        letterRendering: true,
+        allowTaint: true,
+      });
+
+      // Calculate dimensions for PDF (convert canvas dimensions to mm)
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      // Add canvas image to PDF
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+
+      // Save the PDF
+      const name = resumeData.personalInfo.fullName || 'Resume';
+      const filename = `${name.replace(/\s+/g, '_')}_${
+        new Date().toISOString().split('T')[0]
+      }.pdf`;
+      pdf.save(filename);
+
+      // Clean up
+      document.body.removeChild(container);
+      setIsExporting(false);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setIsExporting(false);
+    }
+  };
 
   if (!template) {
     return (
@@ -61,9 +125,15 @@ function EditorPage() {
             <Save className="w-4 h-4 mr-2" />
             Save Draft
           </Button>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportPDF}
+            disabled={isExporting}
+            className={isExporting ? 'opacity-70 cursor-not-allowed' : ''}
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export PDF
+            {isExporting ? 'Exporting...' : 'Export PDF'}
           </Button>
         </div>
       </div>
@@ -83,7 +153,10 @@ function EditorPage() {
             <p className="text-muted-foreground mb-4">
               Live preview of your resume
             </p>
-            <div className="aspect-[8.5/11] bg-white text-black rounded border border-zinc-200 p-6 shadow-md overflow-hidden dark:bg-white">
+            <div
+              ref={previewRef}
+              className="aspect-[8.5/11] bg-white text-black rounded border border-zinc-200 p-6 shadow-md overflow-hidden"
+            >
               <TemplateComponent data={resumeData} />
             </div>
           </div>
