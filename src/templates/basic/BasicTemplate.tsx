@@ -44,7 +44,7 @@ const Experience = ({
             <h3 className="mt-4">Key Responsibilities and Achievements:</h3>
           </>
         ) : null}
-        <div className="pl-6">{children}</div>
+        <div className="pl-3">{children}</div>
       </div>
     </div>
   );
@@ -131,8 +131,8 @@ export function BasicTemplate({ data }: BasicTemplateProps) {
       {resumeData.skills.length > 0 && (
         <div className="mb-6">
           <SectionHeader title="Technical Proficiencies" />
-          <div className="pl-6">
-            <ul className="list-disc">
+          <div className="pl-3">
+            <ul className="pdf-list">
               {resumeData.skills.map((skill, index) => (
                 <li key={index}>{skill}</li>
               ))}
@@ -153,7 +153,7 @@ export function BasicTemplate({ data }: BasicTemplateProps) {
               year={`${experience.startDate} – ${experience.endDate}`}
               summary={experience.description}
             >
-              <ul className="list-disc">
+              <ul className="pdf-list">
                 {experience.keyResponsibilities?.map((responsibility) => (
                   <li key={responsibility}>{responsibility}</li>
                 ))}

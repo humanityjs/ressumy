@@ -1,9 +1,15 @@
 import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { useResumeStore } from '@/stores/resumeStore';
 import { getTemplateById, Template, templates } from '@/templates';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
-import { Download, Save } from 'lucide-react';
+import { Download, Eye, Save } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ResumeForm } from './components/forms/ResumeForm';
@@ -15,6 +21,7 @@ function EditorPage() {
   const resumeData = useResumeStore((state) => state.resumeData);
   const previewRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Parse the template ID from the URL query string
   useEffect(() => {
@@ -44,40 +51,117 @@ function EditorPage() {
       // Create a clone of the preview content to maintain the original DOM
       const element = previewRef.current.cloneNode(true) as HTMLElement;
 
+      // Remove height constraints and overflow settings for PDF export
+      if (element instanceof HTMLElement) {
+        element.style.height = 'auto';
+        element.style.overflow = 'visible';
+        element.style.width = '8.5in';
+        element.style.padding = '0'; // Remove existing padding
+        element.style.border = 'none'; // Remove border
+        element.style.borderRadius = '0'; // Remove rounded corners
+        element.style.boxShadow = 'none'; // Remove shadow
+      }
+
       // Create a temporary container
       const container = document.createElement('div');
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.width = '8.5in'; // Letter width
+      container.style.height = 'auto'; // Let it expand as needed
       container.style.background = 'white';
+      container.style.overflow = 'visible';
 
       // Add the element to the temporary container
       container.appendChild(element);
       document.body.appendChild(container);
 
-      // Configure html2canvas options
       const canvas = await html2canvas(element, {
         scale: 2, // Higher scale for better quality
-        logging: false,
+        logging: true, // Enable logging to debug issues
         useCORS: true,
         letterRendering: true,
         allowTaint: true,
+        backgroundColor: '#ffffff', // Force white background
+        foreignObjectRendering: false, // Disable as it may cause issues
+        height: element.scrollHeight, // Capture full height
+        windowHeight: element.scrollHeight,
       });
 
-      // Calculate dimensions for PDF (convert canvas dimensions to mm)
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Create PDF
+      // Create PDF with A4 dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
 
-      // Add canvas image to PDF
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      // Define page margins (smaller, more reasonable margins)
+      const margin = {
+        top: 12.7, // 0.5 inch in mm
+        right: 12.7,
+        bottom: 12.7,
+        left: 12.7,
+      };
+
+      // Calculate the PDF page dimensions with margins
+      const pageWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const contentWidth = pageWidth - margin.left - margin.right;
+      const contentHeight = pageHeight - margin.top - margin.bottom;
+
+      // Calculate the proper scaling for the image
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Calculate how many pages needed
+      const pagesCount = Math.ceil(imgHeight / contentHeight);
+
+      // For each page, add a slice of the image
+      for (let i = 0; i < pagesCount; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        // Calculate the position and height for this slice
+        const sourceY = i * contentHeight * (canvas.height / imgHeight);
+        const sourceHeight = Math.min(
+          contentHeight * (canvas.height / imgHeight),
+          canvas.height - sourceY
+        );
+
+        // Create a temporary canvas for this slice
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = canvas.width;
+        tmpCanvas.height = sourceHeight;
+        const ctx = tmpCanvas.getContext('2d');
+
+        // Draw the slice from the original canvas
+        if (ctx) {
+          ctx.drawImage(
+            canvas,
+            0,
+            sourceY,
+            canvas.width,
+            sourceHeight,
+            0,
+            0,
+            canvas.width,
+            sourceHeight
+          );
+
+          // Add this slice to the PDF
+          const sliceData = tmpCanvas.toDataURL('image/jpeg', 1.0);
+          const sliceHeight = (sourceHeight * imgWidth) / canvas.width;
+
+          pdf.addImage(
+            sliceData,
+            'JPEG',
+            margin.left,
+            margin.top,
+            imgWidth,
+            sliceHeight
+          );
+        }
+      }
 
       // Save the PDF
       const name = resumeData.personalInfo.fullName || 'Resume';
@@ -128,6 +212,14 @@ function EditorPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Preview
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={exportPDF}
             disabled={isExporting}
             className={isExporting ? 'opacity-70 cursor-not-allowed' : ''}
@@ -138,30 +230,43 @@ function EditorPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        {/* Left side - Form */}
-        <div className="md:col-span-5 space-y-6">
-          <div className="bg-card rounded-lg p-6 border shadow-sm">
-            <ResumeForm template={template} />
-          </div>
-        </div>
-
-        {/* Right side - Preview */}
-        <div className="md:col-span-7">
-          <div className="bg-white rounded-lg p-8 border shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
-            <h2 className="text-2xl font-bold mb-2">Resume Preview</h2>
-            <p className="text-muted-foreground mb-4">
-              Live preview of your resume
-            </p>
-            <div
-              ref={previewRef}
-              className="aspect-[8.5/11] bg-white text-black rounded border border-zinc-200 p-6 shadow-md overflow-hidden"
-            >
-              <TemplateComponent data={resumeData} />
-            </div>
-          </div>
+      {/* Main content - Form only */}
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-card rounded-lg p-6 border shadow-sm">
+          <ResumeForm template={template} />
         </div>
       </div>
+
+      {/* Preview Sheet (slides in from right) */}
+      <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
+        <SheetContent
+          side="right"
+          className="w-[min(100vw,80vw)] sm:max-w-none p-0 overflow-y-auto"
+        >
+          <div className="h-full flex flex-col">
+            <SheetHeader className="p-6 border-b flex justify-between items-center">
+              <SheetTitle>Resume Preview</SheetTitle>
+              <Button
+                onClick={exportPDF}
+                disabled={isExporting}
+                size="sm"
+                className={isExporting ? 'opacity-70 cursor-not-allowed' : ''}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isExporting ? 'Exporting...' : 'Export PDF'}
+              </Button>
+            </SheetHeader>
+            <div className="flex-1 p-6 overflow-y-auto flex flex-col items-center">
+              <div
+                ref={previewRef}
+                className="bg-white text-black rounded border border-zinc-200 p-6 shadow-md w-[8.5in] max-w-full"
+              >
+                <TemplateComponent data={resumeData} />
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
