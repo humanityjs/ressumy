@@ -1,55 +1,61 @@
 import { Button } from '@/components/ui/button';
+import { Database, FileText, Lock, Shield, Upload } from 'lucide-react';
 
 function Home() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-3xl mx-auto">
-        <div className="space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="space-y-8 text-center animate-fade-in">
           {/* Hero Section */}
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
-              React Template
+          <div className="space-y-4">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Ressumy
             </h1>
-            <p className="text-xl text-muted-foreground">
-              A modern stack for building fast web applications
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Create beautiful, professional résumés entirely in your browser -
+              no data leaves your device
             </p>
           </div>
 
-          {/* Features */}
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 mt-12">
-            {features.map((feature) => (
+          {/* Privacy Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            {privacyFeatures.map((feature, index) => (
               <div
                 key={feature.title}
-                className="p-6 border rounded-lg bg-card shadow-sm transition-all hover:shadow-md"
+                className="p-6 rounded-lg bg-card border shadow-sm hover:shadow-md transition-all hover:-translate-y-1 duration-200"
+                style={{ animationDelay: `${index * 150}ms` }}
               >
-                <div className="flex gap-2 items-center mb-4">
-                  {feature.icon}
-                  <h3 className="font-semibold text-lg">{feature.title}</h3>
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 rounded-full bg-primary/10 text-primary">
+                    {feature.icon}
+                  </div>
                 </div>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
 
           {/* Call to Action */}
-          <div className="mt-12 text-center">
-            <Button size="lg" className="animate-pulse">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-5"
-              >
-                <path d="M9 5H2v7" />
-                <path d="M2 12c7.2-2 12-4.8 12-12" />
-                <path d="M9 19h12v-7" />
-                <path d="M22 12c-7.2 2-12 4.8-12 12" />
-              </svg>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => (window.location.href = '/templates')}
+            >
+              <FileText className="mr-2 h-5 w-5" />
               Get Started
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => (window.location.href = '/upload')}
+            >
+              <Upload className="mr-2 h-5 w-5" />
+              Upload Project
             </Button>
           </div>
         </div>
@@ -58,130 +64,24 @@ function Home() {
   );
 }
 
-const features = [
+const privacyFeatures = [
   {
-    title: 'TypeScript',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-5 text-blue-500"
-      >
-        <path d="M16.5 9.4 7.5 4.21" />
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-        <path d="M3.3 7 12 12l8.7-5" />
-        <path d="M12 22V12" />
-      </svg>
-    ),
+    title: '100% Private',
+    icon: <Shield className="h-6 w-6" />,
     description:
-      'Type-safe development with TypeScript for better developer experience',
+      'Your data never leaves your device. All processing happens locally in your browser.',
   },
   {
-    title: 'Shadcn UI',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-5 text-violet-500"
-      >
-        <rect width="18" height="18" x="3" y="3" rx="2" />
-        <path d="M3 9h18" />
-        <path d="M9 21V9" />
-      </svg>
-    ),
+    title: 'Offline Support',
+    icon: <Database className="h-6 w-6" />,
     description:
-      'Beautiful, accessible UI components built with Radix UI and Tailwind CSS',
+      'Create and edit résumés even without an internet connection. Your work is automatically saved.',
   },
   {
-    title: 'Tailwind CSS',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-5 text-cyan-500"
-      >
-        <path d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z" />
-      </svg>
-    ),
-    description: 'Utility-first CSS framework for rapid UI development',
-  },
-  {
-    title: 'Vite',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-5 text-yellow-500"
-      >
-        <path d="m9 14 6-6" />
-        <circle cx="14" cy="9" r="1" />
-        <circle cx="9" cy="14" r="1" />
-        <path d="M7 21v-4" />
-        <path d="M17 21v-4" />
-        <path d="M3 7v4" />
-        <path d="M21 7v4" />
-        <rect width="18" height="14" x="3" y="3" rx="2" />
-      </svg>
-    ),
-    description: 'Next-generation frontend tooling with lightning-fast HMR',
-  },
-  {
-    title: 'React Router',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-5 text-red-500"
-      >
-        <path d="M22 9a4 4 0 0 1-4 4H4" />
-        <path d="M7 22a4 4 0 0 1-4-4V6" />
-        <path d="m16 19 3-3-3-3" />
-      </svg>
-    ),
-    description: 'Declarative routing for React applications',
-  },
-  {
-    title: 'Dark Mode',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-5 text-purple-500"
-      >
-        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-      </svg>
-    ),
-    description: 'Built-in dark mode support with theme toggle',
+    title: 'Local Processing',
+    icon: <Lock className="h-6 w-6" />,
+    description:
+      'Our AI features run entirely on your device - no server calls, complete privacy guaranteed.',
   },
 ];
 

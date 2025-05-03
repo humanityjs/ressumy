@@ -3,7 +3,10 @@ import About from '@/pages/about/About';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import Login from '@/pages/auth/Login';
 import SignUp from '@/pages/auth/SignUp';
+import EditorPage from '@/pages/editor/EditorPage';
 import Home from '@/pages/home/Home';
+import TemplatePage from '@/pages/templates/TemplatePage';
+import UploadPage from '@/pages/upload/UploadPage';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -43,6 +46,18 @@ const router = createBrowserRouter([
       {
         path: 'about',
         element: <About />,
+      },
+      {
+        path: 'templates',
+        element: <TemplatePage />,
+      },
+      {
+        path: 'editor',
+        element: <EditorPage />,
+      },
+      {
+        path: 'upload',
+        element: <UploadPage />,
       },
       // Protected routes could be added here with the ProtectedRoute component
       // Example:

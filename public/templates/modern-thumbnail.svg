@@ -1,0 +1,41 @@
+<svg width="300" height="400" viewBox="0 0 300 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="400" fill="#F4F4F5"/>
+  
+  <!-- Left Column -->
+  <rect x="0" y="0" width="100" height="400" fill="#27272A"/>
+  
+  <!-- Header in Main Area -->
+  <rect x="120" y="30" width="160" height="12" fill="#71717A"/>
+  <rect x="120" y="50" width="120" height="8" fill="#A1A1AA"/>
+  
+  <!-- Contact Info -->
+  <rect x="20" y="30" width="60" height="60" rx="30" fill="#A1A1AA"/>
+  <rect x="20" y="110" width="60" height="4" fill="#D4D4D8"/>
+  <rect x="20" y="125" width="60" height="4" fill="#D4D4D8"/>
+  <rect x="20" y="140" width="60" height="4" fill="#D4D4D8"/>
+  
+  <!-- Content Area -->
+  <rect x="120" y="90" width="160" height="8" fill="#71717A"/>
+  <rect x="120" y="108" width="160" height="3" fill="#D4D4D8"/>
+  <rect x="120" y="118" width="160" height="3" fill="#D4D4D8"/>
+  <rect x="120" y="128" width="120" height="3" fill="#D4D4D8"/>
+  
+  <!-- Experience Section -->
+  <rect x="120" y="160" width="60" height="8" fill="#71717A"/>
+  <rect x="120" y="178" width="160" height="3" fill="#D4D4D8"/>
+  <rect x="120" y="188" width="160" height="3" fill="#D4D4D8"/>
+  <rect x="120" y="198" width="120" height="3" fill="#D4D4D8"/>
+  
+  <rect x="120" y="218" width="60" height="8" fill="#71717A"/>
+  <rect x="120" y="236" width="160" height="3" fill="#D4D4D8"/>
+  <rect x="120" y="246" width="160" height="3" fill="#D4D4D8"/>
+  <rect x="120" y="256" width="120" height="3" fill="#D4D4D8"/>
+  
+  <!-- Skills in Left Column -->
+  <rect x="20" y="180" width="60" height="8" fill="#E4E4E7"/>
+  <rect x="20" y="200" width="30" height="20" rx="10" fill="#52525B"/>
+  <rect x="55" y="200" width="30" height="20" rx="10" fill="#52525B"/>
+  <rect x="20" y="225" width="30" height="20" rx="10" fill="#52525B"/>
+  <rect x="55" y="225" width="30" height="20" rx="10" fill="#52525B"/>
+  <rect x="20" y="250" width="30" height="20" rx="10" fill="#52525B"/>
+</svg> 

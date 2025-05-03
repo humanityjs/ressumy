@@ -118,3 +118,25 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 1 – wipe out the UA bullet completely */
+.pdf-list {
+  list-style: none;          /* removes the ::marker */
+  margin: 0;
+  padding: 0;                /* start from a clean slate */
+}
+
+/* 2 – draw our own bullet */
+.pdf-list > li {
+  position: relative;        /* we’ll anchor ::before to this box   */
+  padding-left: 1.1em;       /* 3 – space reserved for every line   */
+}
+
+.pdf-list > li::before {
+  content: '\2022';          /* • bullet glyph                      */
+  position: absolute;
+  left: 0; top: 0;           /* bullet sits at the very start       */
+  line-height: 1.15em;       /* ≈ same as your text line-height     */
+  font-weight: 700;          /* makes the dot solid                 */
+  font-size: 1em;            /* bullet the same size as the text    */
+}
