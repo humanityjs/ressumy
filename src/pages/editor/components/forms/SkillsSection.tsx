@@ -33,16 +33,6 @@ function SkillsSection({
     <div key={section.id} className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">{section.title}</h2>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAddSkill}
-          className="flex items-center gap-1"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Add Skill
-        </Button>
       </div>
 
       <Separator className="my-4" />
@@ -59,34 +49,35 @@ function SkillsSection({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={springConfig}
               >
-                <FormItem className="flex items-center gap-2">
+                <FormItem className="relative">
                   <FormControl>
-                    <Input
-                      value={field.value as string}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        const newSkills = [...resumeData.skills];
-                        newSkills[index] = e.target.value;
-                        setSkills(newSkills);
-                      }}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                    />
+                    <div className="flex items-center">
+                      <Input
+                        placeholder="Enter skill"
+                        value={field.value as string}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          const newSkills = [...resumeData.skills];
+                          newSkills[index] = e.target.value;
+                          setSkills(newSkills);
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="ml-1"
+                        onClick={() => {
+                          const newSkills = resumeData.skills.filter(
+                            (_, idx) => idx !== index
+                          );
+                          setSkills(newSkills);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </FormControl>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const newSkills = resumeData.skills.filter(
-                        (_, i) => i !== index
-                      );
-                      setSkills(newSkills);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                   <FormMessage />
                 </FormItem>
               </motion.div>
@@ -105,6 +96,21 @@ function SkillsSection({
             onClick={handleAddSkill}
           >
             Add your first skill
+          </Button>
+        </div>
+      )}
+
+      {resumeData.skills.length > 0 && (
+        <div className="flex justify-center mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAddSkill}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add Skill
           </Button>
         </div>
       )}

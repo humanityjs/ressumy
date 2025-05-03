@@ -82,6 +82,18 @@ const basicTemplate: Template = {
       ],
     },
     {
+      id: 'skills',
+      title: 'Skills',
+      fields: [
+        {
+          id: 'skills',
+          label: 'Skills (comma separated)',
+          type: 'text',
+          placeholder: 'JavaScript, React, TypeScript, Node.js, Git',
+        },
+      ],
+    },
+    {
       id: 'experience',
       title: 'Work Experience',
       allowMultiple: true,
@@ -157,18 +169,6 @@ const basicTemplate: Template = {
           label: 'End Date',
           type: 'text',
           placeholder: 'June 2020',
-        },
-      ],
-    },
-    {
-      id: 'skills',
-      title: 'Skills',
-      fields: [
-        {
-          id: 'skills',
-          label: 'Skills (comma separated)',
-          type: 'text',
-          placeholder: 'JavaScript, React, TypeScript, Node.js, Git',
         },
       ],
     },

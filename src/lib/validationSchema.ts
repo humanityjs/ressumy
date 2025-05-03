@@ -38,7 +38,17 @@ export type FormPath =
 
 // Personal Information Schema
 export const personalInfoSchema = yup.object({
-  fullName: yup.string().required('Full name is required'),
+  fullName: yup
+    .string()
+    .required('Full name is required')
+    .test(
+      'has-space',
+      'Please enter first and last name separated by a space',
+      (value) => {
+        if (!value) return true; // Skip validation if field is empty (required handles this)
+        return value.trim().includes(' '); // Check if there's at least one space
+      }
+    ),
   jobTitle: yup.string().required('Job title is required'),
   email: yup
     .string()

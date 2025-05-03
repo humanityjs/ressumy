@@ -97,7 +97,7 @@ export function BasicTemplate({ data }: BasicTemplateProps) {
     <div className="font-[system-ui] text-black">
       {/* Header Section */}
       <div className="mb-6">
-        <h1 className="text-[40px] font-bold mb-2">
+        <h1 className="text-[40px] tracking-[.01px] font-bold mb-2">
           {resumeData.personalInfo.fullName}
         </h1>
         <p className="text-xl mb-5">{resumeData.personalInfo.jobTitle}</p>

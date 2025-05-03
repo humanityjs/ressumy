@@ -389,16 +389,6 @@ function Experience({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">{section.title}</h2>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAddExperience}
-          className="flex items-center gap-1"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Add Experience
-        </Button>
       </div>
 
       <Separator className="my-4" />
@@ -483,6 +473,21 @@ function Experience({
             onClick={handleAddExperience}
           >
             Add your first experience
+          </Button>
+        </div>
+      )}
+
+      {resumeData.experiences.length > 0 && (
+        <div className="flex justify-center mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAddExperience}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add Experience
           </Button>
         </div>
       )}
