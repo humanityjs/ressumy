@@ -9,6 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { useLLM } from '@/lib/llm';
 import {
   ExtendedExperience,
   FormPath,
@@ -16,10 +17,10 @@ import {
 } from '@/lib/validationSchema';
 import { ResumeData } from '@/stores/resumeStore';
 import { TemplateSection } from '@/templates';
-import { PlusCircle, Trash2, ZapIcon } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, ZapIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { UseFormReturn } from 'node_modules/react-hook-form/dist/types/form';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const springConfig = { stiffness: 300, damping: 30 };
 
@@ -41,9 +42,25 @@ function ResponsibilityItem({
   onDelete,
   registerRef,
 }: ResponsibilityItemProps) {
-  const handlePolishBullet = () => {
-    // LLM enhancement will be added later
-    console.log('Polish bullet for', experienceId, 'index', index);
+  const [isPolishing, setIsPolishing] = useState(false);
+  const { polishBullet, isInitialized } = useLLM();
+
+  const handlePolishBullet = async () => {
+    if (!value.trim() || !isInitialized) return;
+
+    try {
+      setIsPolishing(true);
+      const result = await polishBullet(value);
+      if (result.success) {
+        onChange(result.polishedText);
+      } else {
+        console.error('Failed to polish bullet:', result.error);
+      }
+    } catch (err) {
+      console.error('Error polishing bullet:', err);
+    } finally {
+      setIsPolishing(false);
+    }
   };
 
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -74,9 +91,19 @@ function ResponsibilityItem({
             className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
             type="button"
             onClick={handlePolishBullet}
+            disabled={!value.trim() || isPolishing || !isInitialized}
           >
-            <ZapIcon className="h-3 w-3 mr-1" />
-            Polish bullet
+            {isPolishing ? (
+              <>
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                Polishing...
+              </>
+            ) : (
+              <>
+                <ZapIcon className="h-3 w-3 mr-1" />
+                Polish bullet
+              </>
+            )}
           </Button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { Layout } from '@/components/Layout';
+import { LLMInitializer } from '@/components/ui/llm-initializer';
 import About from '@/pages/about/About';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import Login from '@/pages/auth/Login';
@@ -80,6 +81,9 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
+          {/* The LLMInitializer will start loading the AI model
+              as soon as the app mounts, regardless of which page is viewed */}
+          <LLMInitializer />
           <RouterProvider router={router} />
         </QueryClientProvider>
       </AuthProvider>
