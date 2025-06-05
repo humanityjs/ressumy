@@ -8,7 +8,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { TextComparison } from '@/components/ui/text-comparison';
 import { Textarea } from '@/components/ui/textarea';
+import { useLLM } from '@/lib/llm';
 import {
   ExtendedExperience,
   FormPath,
@@ -16,10 +18,10 @@ import {
 } from '@/lib/validationSchema';
 import { ResumeData } from '@/stores/resumeStore';
 import { TemplateSection } from '@/templates';
-import { PlusCircle, Trash2, ZapIcon } from 'lucide-react';
+import { Loader2, PlusCircle, Sparkles, Trash2, ZapIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { UseFormReturn } from 'node_modules/react-hook-form/dist/types/form';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const springConfig = { stiffness: 300, damping: 30 };
 
@@ -27,7 +29,6 @@ const springConfig = { stiffness: 300, damping: 30 };
 interface ResponsibilityItemProps {
   value: string;
   index: number;
-  experienceId: string;
   onChange: (value: string) => void;
   onDelete: () => void;
   registerRef: (element: HTMLTextAreaElement | null) => void;
@@ -36,14 +37,41 @@ interface ResponsibilityItemProps {
 function ResponsibilityItem({
   value,
   index,
-  experienceId,
   onChange,
   onDelete,
   registerRef,
 }: ResponsibilityItemProps) {
-  const handlePolishBullet = () => {
-    // LLM enhancement will be added later
-    console.log('Polish bullet for', experienceId, 'index', index);
+  const [isPolishing, setIsPolishing] = useState(false);
+  const [polishedText, setPolishedText] = useState<string | null>(null);
+  const { polishBullet, isInitialized } = useLLM();
+
+  const handlePolishBullet = async () => {
+    if (!value.trim() || !isInitialized) return;
+
+    try {
+      setIsPolishing(true);
+      const result = await polishBullet(value);
+      if (result.success) {
+        setPolishedText(result.polishedText);
+      } else {
+        console.error('Failed to polish bullet:', result.error);
+      }
+    } catch (err) {
+      console.error('Error polishing bullet:', err);
+    } finally {
+      setIsPolishing(false);
+    }
+  };
+
+  const handleAcceptPolishedText = () => {
+    if (polishedText) {
+      onChange(polishedText);
+      setPolishedText(null);
+    }
+  };
+
+  const handleRejectPolishedText = () => {
+    setPolishedText(null);
   };
 
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -53,41 +81,62 @@ function ResponsibilityItem({
   };
 
   return (
-    <div className="flex gap-2">
-      <div className="flex-1 relative">
-        <Textarea
-          placeholder={`Responsibility ${index + 1}`}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full py-2 min-h-0 resize-none overflow-hidden transition-all"
-          style={{
-            height: 'auto',
-            minHeight: '38px',
-          }}
-          onInput={handleTextareaInput}
-          ref={registerRef}
-        />
-        <div className="flex justify-end mt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
-            type="button"
-            onClick={handlePolishBullet}
-          >
-            <ZapIcon className="h-3 w-3 mr-1" />
-            Polish bullet
-          </Button>
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
+        <div className="flex-1 relative">
+          <Textarea
+            placeholder={`Responsibility ${index + 1}`}
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full py-2 min-h-0 resize-none overflow-hidden transition-all"
+            style={{
+              height: 'auto',
+              minHeight: '38px',
+            }}
+            onInput={handleTextareaInput}
+            ref={registerRef}
+          />
+          <div className="flex justify-end mt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
+              type="button"
+              onClick={handlePolishBullet}
+              disabled={!value.trim() || isPolishing || !isInitialized}
+            >
+              {isPolishing ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Polishing...
+                </>
+              ) : (
+                <>
+                  <ZapIcon className="h-3 w-3 mr-1" />
+                  Polish bullet
+                </>
+              )}
+            </Button>
+          </div>
         </div>
+        <Button
+          type="button"
+          variant="destructive"
+          size="icon"
+          onClick={onDelete}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
-      <Button
-        type="button"
-        variant="destructive"
-        size="icon"
-        onClick={onDelete}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+
+      {polishedText && (
+        <TextComparison
+          originalText={value}
+          enhancedText={polishedText}
+          onAccept={handleAcceptPolishedText}
+          onReject={handleRejectPolishedText}
+        />
+      )}
     </div>
   );
 }
@@ -183,7 +232,6 @@ function ResponsibilitiesList({
                     key={respIndex}
                     value={responsibility}
                     index={respIndex}
-                    experienceId={experience.id}
                     onChange={(value) =>
                       handleResponsibilityChange(respIndex, value)
                     }
@@ -291,9 +339,100 @@ function JobDescription({
   form,
   updateExperience,
 }: JobDescriptionProps) {
-  const handlePolishDescription = () => {
-    // LLM enhancement will be added later
-    console.log('Polish description for', experience.id);
+  const [isPolishing, setIsPolishing] = useState(false);
+  const [polishedDescription, setPolishedDescription] = useState<string | null>(
+    null
+  );
+  const [isStructuring, setIsStructuring] = useState(false);
+  const [structured, setStructured] = useState<
+    | {
+        summary: string;
+        bullets: string[];
+      }
+    | null
+  >(null);
+  const { polishSummary, structureJobDescription, isInitialized } = useLLM();
+
+  const handlePolishDescription = async () => {
+    const currentDescription = experience.description;
+    if (!currentDescription || !isInitialized) return;
+
+    try {
+      setIsPolishing(true);
+      // Using polishSummary since it's more appropriate for longer text
+      const result = await polishSummary(currentDescription);
+
+      if (result.success) {
+        setPolishedDescription(result.polishedText);
+      } else {
+        console.error('Failed to polish description:', result.error);
+      }
+    } catch (err) {
+      console.error('Error polishing description:', err);
+    } finally {
+      setIsPolishing(false);
+    }
+  };
+
+  const handleAcceptPolishedDescription = () => {
+    if (polishedDescription) {
+      updateExperience(experience.id, {
+        description: polishedDescription,
+      });
+      form.setValue(
+        `experiences.${index}.description` as FormPath,
+        polishedDescription
+      );
+      setPolishedDescription(null);
+    }
+  };
+
+  const handleRejectPolishedDescription = () => {
+    setPolishedDescription(null);
+  };
+
+  // ----------- Structure generation handlers ----------
+  const handleGenerateStructure = async () => {
+    const inputText = experience.description;
+    if (!inputText || !isInitialized) return;
+
+    try {
+      setIsStructuring(true);
+      const result = await structureJobDescription(inputText);
+      if (result.success) {
+        setStructured({ summary: result.summary, bullets: result.bullets });
+      } else {
+        console.error('Failed to generate structure:', result.error);
+      }
+    } catch (err) {
+      console.error('Error generating structure:', err);
+    } finally {
+      setIsStructuring(false);
+    }
+  };
+
+  const handleAcceptStructured = () => {
+    if (!structured) return;
+
+    updateExperience(experience.id, {
+      description: structured.summary,
+      keyResponsibilities: structured.bullets,
+    });
+
+    form.setValue(
+      `experiences.${index}.description` as FormPath,
+      structured.summary
+    );
+    form.setValue(
+      `experiences.${index}.keyResponsibilities` as FormPath,
+      structured.bullets
+    );
+
+    setStructured(null);
+  };
+
+  const handleRejectStructured = () => {
+    setStructured(null);
   };
 
   return (
@@ -329,19 +468,91 @@ function JobDescription({
                       name={formField.name}
                       ref={formField.ref}
                     />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 bottom-2 text-xs text-muted-foreground opacity-70 hover:opacity-100"
-                      type="button"
-                      onClick={handlePolishDescription}
-                    >
-                      <ZapIcon className="h-3 w-3 mr-1" />
-                      Polish bullet
-                    </Button>
+                    <div className="absolute right-2 bottom-2 flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
+                        onClick={handlePolishDescription}
+                        disabled={
+                          !experience.description || isPolishing || !isInitialized
+                        }
+                      >
+                        {isPolishing ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Polishing...
+                          </>
+                        ) : (
+                          <>
+                            <ZapIcon className="h-3 w-3 mr-1" />
+                            Polish
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
+                        onClick={handleGenerateStructure}
+                        disabled={
+                          !experience.description || isStructuring || !isInitialized
+                        }
+                      >
+                        {isStructuring ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Generate
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </FormControl>
                 <FormMessage />
+
+                {polishedDescription && (
+                  <TextComparison
+                    originalText={experience.description || ''}
+                    enhancedText={polishedDescription}
+                    onAccept={handleAcceptPolishedDescription}
+                    onReject={handleRejectPolishedDescription}
+                    className="mt-3"
+                  />
+                )}
+
+                {structured && (
+                  <div className="mt-3 p-4 border rounded-md bg-muted/10">
+                    <h4 className="font-medium mb-2">AI generated suggestion</h4>
+                    <p className="whitespace-pre-wrap">{structured.summary}</p>
+                    {structured.bullets.length > 0 && (
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        {structured.bullets.map((b, i) => (
+                          <li key={i}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="flex gap-2 mt-4">
+                      <Button size="sm" onClick={handleAcceptStructured}>
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleRejectStructured}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </FormItem>
             )}
           />

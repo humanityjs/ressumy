@@ -169,15 +169,17 @@ export function BasicTemplate({ data }: BasicTemplateProps) {
           <SectionHeader title="Education" />
 
           {resumeData.educations.map((education) => (
-            <div key={education.id} className="mb-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold">{education.degree}</h3>
-                <span className="text-sm">
-                  {education.startDate} – {education.endDate}
-                </span>
-              </div>
-              <p className="text-sm">{education.school}</p>
-            </div>
+            <Experience
+              key={education.id}
+              title={education.degree}
+              year={`${education.startDate} – ${education.endDate}`}
+              summary=""
+              simple
+            >
+              <ul className="pdf-list">
+                <li>{education.school}</li>
+              </ul>
+            </Experience>
           ))}
         </div>
       )}

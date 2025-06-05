@@ -1,10 +1,12 @@
 import { Button } from '@/components/ui/button';
+import { LLMInitializer } from '@/components/ui/llm-initializer';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useLLM } from '@/lib/llm';
 import { exportElementToPDF } from '@/lib/utils';
 import { useResumeStore } from '@/stores/resumeStore';
 import { getTemplateById, Template, templates } from '@/templates';
@@ -21,6 +23,7 @@ function EditorPage() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const llm = useLLM();
 
   // Parse the template ID from the URL query string
   useEffect(() => {
@@ -101,6 +104,13 @@ function EditorPage() {
 
       {/* Main content - Form only */}
       <div className="max-w-3xl mx-auto">
+        <LLMInitializer
+          onInitialize={llm.initialize}
+          progress={llm.progress}
+          isLoading={llm.isLoading}
+          isInitialized={llm.isInitialized}
+          className="mb-6"
+        />
         <div className="bg-card rounded-lg p-6 border shadow-sm">
           <ResumeForm template={template} />
         </div>
