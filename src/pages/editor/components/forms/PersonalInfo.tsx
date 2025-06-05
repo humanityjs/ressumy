@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { TextComparison } from '@/components/ui/text-comparison';
 import { Textarea } from '@/components/ui/textarea';
 import { useLLM } from '@/lib/llm';
 import { FormPath, ResumeFormData } from '@/lib/validationSchema';
@@ -29,6 +30,7 @@ function PersonalInfo({
   resumeData: ResumeData;
 }) {
   const [isPolishingSummary, setIsPolishingSummary] = useState(false);
+  const [polishedSummary, setPolishedSummary] = useState<string | null>(null);
   const { polishSummary, isInitialized } = useLLM();
   const [forceReady, setForceReady] = useState(false);
 
@@ -66,12 +68,8 @@ function PersonalInfo({
       const result = await polishSummary(currentSummary);
 
       if (result.success) {
-        // Update form and store with polished summary
-        onPersonalInfoChange({
-          ...resumeData.personalInfo,
-          summary: result.polishedText,
-        });
-        form.setValue('personalInfo.summary' as FormPath, result.polishedText);
+        // Store the polished summary for comparison
+        setPolishedSummary(result.polishedText);
       } else {
         // Display error message to the user
         console.error('Failed to polish summary:', result.error);
@@ -87,6 +85,22 @@ function PersonalInfo({
     } finally {
       setIsPolishingSummary(false);
     }
+  };
+
+  const handleAcceptPolishedSummary = () => {
+    if (polishedSummary) {
+      // Update form and store with polished summary
+      onPersonalInfoChange({
+        ...resumeData.personalInfo,
+        summary: polishedSummary,
+      });
+      form.setValue('personalInfo.summary' as FormPath, polishedSummary);
+      setPolishedSummary(null);
+    }
+  };
+
+  const handleRejectPolishedSummary = () => {
+    setPolishedSummary(null);
   };
 
   return (
@@ -192,6 +206,16 @@ function PersonalInfo({
                   />
                 </FormControl>
                 <FormMessage />
+
+                {polishedSummary && (
+                  <TextComparison
+                    originalText={resumeData.personalInfo.summary || ''}
+                    enhancedText={polishedSummary}
+                    onAccept={handleAcceptPolishedSummary}
+                    onReject={handleRejectPolishedSummary}
+                    className="mt-3"
+                  />
+                )}
               </FormItem>
             )}
           />

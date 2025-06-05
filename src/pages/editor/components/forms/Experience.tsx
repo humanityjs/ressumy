@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { TextComparison } from '@/components/ui/text-comparison';
 import { Textarea } from '@/components/ui/textarea';
 import { useLLM } from '@/lib/llm';
 import {
@@ -28,7 +29,6 @@ const springConfig = { stiffness: 300, damping: 30 };
 interface ResponsibilityItemProps {
   value: string;
   index: number;
-  experienceId: string;
   onChange: (value: string) => void;
   onDelete: () => void;
   registerRef: (element: HTMLTextAreaElement | null) => void;
@@ -37,12 +37,12 @@ interface ResponsibilityItemProps {
 function ResponsibilityItem({
   value,
   index,
-  experienceId,
   onChange,
   onDelete,
   registerRef,
 }: ResponsibilityItemProps) {
   const [isPolishing, setIsPolishing] = useState(false);
+  const [polishedText, setPolishedText] = useState<string | null>(null);
   const { polishBullet, isInitialized } = useLLM();
 
   const handlePolishBullet = async () => {
@@ -52,7 +52,7 @@ function ResponsibilityItem({
       setIsPolishing(true);
       const result = await polishBullet(value);
       if (result.success) {
-        onChange(result.polishedText);
+        setPolishedText(result.polishedText);
       } else {
         console.error('Failed to polish bullet:', result.error);
       }
@@ -63,6 +63,17 @@ function ResponsibilityItem({
     }
   };
 
+  const handleAcceptPolishedText = () => {
+    if (polishedText) {
+      onChange(polishedText);
+      setPolishedText(null);
+    }
+  };
+
+  const handleRejectPolishedText = () => {
+    setPolishedText(null);
+  };
+
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.target as HTMLTextAreaElement;
     target.style.height = 'auto';
@@ -70,51 +81,62 @@ function ResponsibilityItem({
   };
 
   return (
-    <div className="flex gap-2">
-      <div className="flex-1 relative">
-        <Textarea
-          placeholder={`Responsibility ${index + 1}`}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full py-2 min-h-0 resize-none overflow-hidden transition-all"
-          style={{
-            height: 'auto',
-            minHeight: '38px',
-          }}
-          onInput={handleTextareaInput}
-          ref={registerRef}
-        />
-        <div className="flex justify-end mt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
-            type="button"
-            onClick={handlePolishBullet}
-            disabled={!value.trim() || isPolishing || !isInitialized}
-          >
-            {isPolishing ? (
-              <>
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                Polishing...
-              </>
-            ) : (
-              <>
-                <ZapIcon className="h-3 w-3 mr-1" />
-                Polish bullet
-              </>
-            )}
-          </Button>
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
+        <div className="flex-1 relative">
+          <Textarea
+            placeholder={`Responsibility ${index + 1}`}
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full py-2 min-h-0 resize-none overflow-hidden transition-all"
+            style={{
+              height: 'auto',
+              minHeight: '38px',
+            }}
+            onInput={handleTextareaInput}
+            ref={registerRef}
+          />
+          <div className="flex justify-end mt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
+              type="button"
+              onClick={handlePolishBullet}
+              disabled={!value.trim() || isPolishing || !isInitialized}
+            >
+              {isPolishing ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Polishing...
+                </>
+              ) : (
+                <>
+                  <ZapIcon className="h-3 w-3 mr-1" />
+                  Polish bullet
+                </>
+              )}
+            </Button>
+          </div>
         </div>
+        <Button
+          type="button"
+          variant="destructive"
+          size="icon"
+          onClick={onDelete}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
-      <Button
-        type="button"
-        variant="destructive"
-        size="icon"
-        onClick={onDelete}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+
+      {polishedText && (
+        <TextComparison
+          originalText={value}
+          enhancedText={polishedText}
+          onAccept={handleAcceptPolishedText}
+          onReject={handleRejectPolishedText}
+        />
+      )}
     </div>
   );
 }
@@ -210,7 +232,6 @@ function ResponsibilitiesList({
                     key={respIndex}
                     value={responsibility}
                     index={respIndex}
-                    experienceId={experience.id}
                     onChange={(value) =>
                       handleResponsibilityChange(respIndex, value)
                     }
@@ -318,9 +339,48 @@ function JobDescription({
   form,
   updateExperience,
 }: JobDescriptionProps) {
-  const handlePolishDescription = () => {
-    // LLM enhancement will be added later
-    console.log('Polish description for', experience.id);
+  const [isPolishing, setIsPolishing] = useState(false);
+  const [polishedDescription, setPolishedDescription] = useState<string | null>(
+    null
+  );
+  const { polishSummary, isInitialized } = useLLM();
+
+  const handlePolishDescription = async () => {
+    const currentDescription = experience.description;
+    if (!currentDescription || !isInitialized) return;
+
+    try {
+      setIsPolishing(true);
+      // Using polishSummary since it's more appropriate for longer text
+      const result = await polishSummary(currentDescription);
+
+      if (result.success) {
+        setPolishedDescription(result.polishedText);
+      } else {
+        console.error('Failed to polish description:', result.error);
+      }
+    } catch (err) {
+      console.error('Error polishing description:', err);
+    } finally {
+      setIsPolishing(false);
+    }
+  };
+
+  const handleAcceptPolishedDescription = () => {
+    if (polishedDescription) {
+      updateExperience(experience.id, {
+        description: polishedDescription,
+      });
+      form.setValue(
+        `experiences.${index}.description` as FormPath,
+        polishedDescription
+      );
+      setPolishedDescription(null);
+    }
+  };
+
+  const handleRejectPolishedDescription = () => {
+    setPolishedDescription(null);
   };
 
   return (
@@ -362,13 +422,35 @@ function JobDescription({
                       className="absolute right-2 bottom-2 text-xs text-muted-foreground opacity-70 hover:opacity-100"
                       type="button"
                       onClick={handlePolishDescription}
+                      disabled={
+                        !experience.description || isPolishing || !isInitialized
+                      }
                     >
-                      <ZapIcon className="h-3 w-3 mr-1" />
-                      Polish bullet
+                      {isPolishing ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Polishing...
+                        </>
+                      ) : (
+                        <>
+                          <ZapIcon className="h-3 w-3 mr-1" />
+                          Polish with AI
+                        </>
+                      )}
                     </Button>
                   </div>
                 </FormControl>
                 <FormMessage />
+
+                {polishedDescription && (
+                  <TextComparison
+                    originalText={experience.description || ''}
+                    enhancedText={polishedDescription}
+                    onAccept={handleAcceptPolishedDescription}
+                    onReject={handleRejectPolishedDescription}
+                    className="mt-3"
+                  />
+                )}
               </FormItem>
             )}
           />

@@ -22,6 +22,16 @@ interface PolishResult {
   error?: string;
 }
 
+// ADD_INTERFACE_START
+// Result returned when converting a rough, unstructured job description into a concise summary and action-oriented bullet points.
+interface JobStructureResult {
+  summary: string;
+  bullets: string[];
+  success: boolean;
+  error?: string;
+}
+// ADD_INTERFACE_END
+
 class LLMService {
   private config: LLMConfig;
   private isLoading: boolean = false;
@@ -215,22 +225,20 @@ class LLMService {
 
       const systemMessage: ChatCompletionSystemMessageParam = {
         role: 'system',
-        content: `You're a friendly career coach helping improve a resume bullet point.
-
-        Make it sound natural and compelling by:
-        - Starting with powerful action verbs that feel conversational
-        - Keeping any numbers or achievements (or suggesting realistic ones if appropriate)
-        - Removing corporate jargon and robotic-sounding phrases
-        - Writing at a similar length to what was provided
-        - Using a warm, professional tone that sounds like a real person wrote it
-        - Focusing on what the person actually accomplished
-        
-        IMPORTANT: Return ONLY the improved text without any introduction, explanation, or quotes. Do not start with phrases like "Here's a rewritten bullet point..." or similar text. Just provide the polished bullet point directly.`,
+        content: `You are a friendly career-coach AI. 
+      Rewrite a single resume bullet so it is more natural, concise, and accomplishment-focused by:
+      • Starting with a strong action verb  
+      • Preserving or suggesting realistic numbers/metrics  
+      • Eliminating corporate jargon and filler  
+      • Keeping roughly the same length  
+      • Using a warm but professional tone  
+      
+      IMPORTANT: Your reply must contain **only** the improved bullet text itself—no labels, explanations, markdown, or bullet symbols.`,
       };
 
       const userMessage: ChatCompletionUserMessageParam = {
         role: 'user',
-        content: `Could you make this bullet point sound more natural and impressive? "${text}"`,
+        content: `Improve this resume bullet: ${text}`,
       };
 
       // Use OpenAI-compatible API to generate response
@@ -245,12 +253,19 @@ class LLMService {
 
       // Remove common prefixes that the model might add despite instructions
       improvedText = improvedText.replace(
-        /^(here['']s |here is |i['']ve |i have )?(a |an |the )?(revised|rewritten|improved|enhanced|polished|new|better|updated|refined|professional)( version of)? ?(your |the |this )?(bullet point|point|text|statement|summary|content)?:?\s*/i,
+        /^(here['']s |here is |i['']ve |i have |that sounds |that['']s |bullet point |summary |content )?(more impactful|more natural|more compelling|improved|better|clearer|stronger|enhanced|refined)( and )?(natural|impactful|compelling|professional|effective)?:?\s*/i,
+        ''
+      );
+
+      // Also remove prefixes like "summary that's more impactful and natural:"
+      improvedText = improvedText.replace(
+        /^(summary|bullet point|text|content|version|point|statement)(\s+that['']s|\s+that\s+is)?(\s+)(more|better|clearer)(\s+).*?:/i,
         ''
       );
 
       // Remove quotes if the model wrapped the response in them
-      improvedText = improvedText.replace(/^["'](.+)["']$/, '$1');
+      improvedText = improvedText.replace(/^["'](.+)["']$/s, '$1');
+      improvedText = improvedText.replace(/^(.+):$/s, '$1');
 
       return { polishedText: improvedText, success: true };
     } catch (err) {
@@ -306,12 +321,12 @@ class LLMService {
         - Writing in a warm, professional tone with personality
         - Focusing on unique qualities that tell a compelling story
         
-        IMPORTANT: Return ONLY the improved summary without any introduction, explanation, or quotes. Do not start with phrases like "Here's a rewritten summary..." or similar text. Just provide the polished summary directly.`,
+        IMPORTANT: Return ONLY the improved text WITHOUT ANY INTRODUCTION OR PREFIX WHATSOEVER. Do not add phrases like "that sounds more natural" or "summary that's more impactful". Start directly with the first word of the actual summary.`,
       };
 
       const userMessage: ChatCompletionUserMessageParam = {
         role: 'user',
-        content: `Could you help me make this professional summary sound more natural and compelling? "${text}"`,
+        content: `Improve this summary by making it more impactful and natural: ${text}`,
       };
 
       // Use OpenAI-compatible API to generate response
@@ -326,18 +341,127 @@ class LLMService {
 
       // Remove common prefixes that the model might add despite instructions
       improvedText = improvedText.replace(
-        /^(here['']s |here is |i['']ve |i have )?(a |an |the )?(revised|rewritten|improved|enhanced|polished|new|better|updated|refined|professional)( version of)? ?(your |the |this )?(summary|profile|bio|text|statement|content)?:?\s*/i,
+        /^(here['']s |here is |i['']ve |i have |that sounds |that['']s |bullet point |summary |content )?(more impactful|more natural|more compelling|improved|better|clearer|stronger|enhanced|refined)( and )?(natural|impactful|compelling|professional|effective)?:?\s*/i,
+        ''
+      );
+
+      // Also remove prefixes like "summary that's more impactful and natural:"
+      improvedText = improvedText.replace(
+        /^(summary|bullet point|text|content|version|point|statement)(\s+that['']s|\s+that\s+is)?(\s+)(more|better|clearer)(\s+).*?:/i,
         ''
       );
 
       // Remove quotes if the model wrapped the response in them
-      improvedText = improvedText.replace(/^["'](.+)["']$/, '$1');
+      improvedText = improvedText.replace(/^["'](.+)["']$/s, '$1');
+      improvedText = improvedText.replace(/^(.+):$/s, '$1');
 
       return { polishedText: improvedText, success: true };
     } catch (error) {
       console.error('Error polishing summary text:', error);
       return {
         polishedText: text,
+        success: false,
+        error: 'Failed to process text',
+      };
+    }
+  }
+
+  /**
+   * Transform a rough and incoherent job description into a concise summary and bullet points.
+   * @param text Raw user input describing job responsibilities and achievements.
+   * @returns Structured summary and bullet list.
+   */
+  async structureJobDescription(text: string): Promise<JobStructureResult> {
+    // Ensure model is ready
+    if (!this.isInitialized || !this.engine) {
+      try {
+        const initialized = await this.initialize();
+        if (!initialized || !this.engine) {
+          return {
+            summary: text,
+            bullets: [],
+            success: false,
+            error: 'LLM not initialized',
+          };
+        }
+      } catch (error) {
+        console.error('Failed to initialize LLM:', error);
+        return {
+          summary: text,
+          bullets: [],
+          success: false,
+          error: 'Failed to initialize LLM',
+        };
+      }
+    }
+
+    try {
+      const engine = this.engine!;
+
+      const systemMessage: ChatCompletionSystemMessageParam = {
+        role: 'system',
+        content: `You are a seasoned career coach helping job seekers craft compelling résumé content.\n\nGiven an unstructured description of what someone did in a particular role, produce:\n1. A short 1–2 sentence role summary that highlights overall impact.\n2. A list of 3-6 accomplishment-focused bullet points that start with strong action verbs and, when reasonable, include quantifiable metrics.\n\nIMPORTANT FORMAT: Return ONLY valid single-line JSON with the shape {"summary": string, "bullets": string[] }. Do NOT wrap in markdown or add any extra words.`,
+      };
+
+      const userMessage: ChatCompletionUserMessageParam = {
+        role: 'user',
+        content: `Raw role description: ${text}`,
+      };
+
+      const response = await engine.chat.completions.create({
+        messages: [systemMessage, userMessage],
+        temperature: this.config.temperature || 0.7,
+        max_tokens: this.config.maxTokens || 512,
+      });
+
+      let raw = response.choices[0]?.message.content?.trim() || '';
+
+      // The model might wrap JSON in markdown code block – strip if present
+      raw = raw.replace(/^```(?:json)?\s*|\s*```$/g, '');
+
+      let parsed: JobStructureResult | null = null;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (parseErr) {
+        console.warn('Failed to parse JSON. Attempting recovery.', parseErr);
+        // Attempt to fix common JSON issues, such as trailing commas
+        try {
+          const safe = raw.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+          parsed = JSON.parse(safe);
+        } catch {
+          // Give up – return raw text as summary
+          return {
+            summary: raw || text,
+            bullets: [],
+            success: false,
+            error: 'Malformed JSON returned by LLM',
+          };
+        }
+      }
+
+      if (
+        parsed &&
+        Array.isArray(parsed.bullets) &&
+        typeof parsed.summary === 'string'
+      ) {
+        return {
+          summary: parsed.summary,
+          bullets: parsed.bullets,
+          success: true,
+        };
+      }
+
+      return {
+        summary: parsed?.summary || text,
+        bullets: parsed?.bullets || [],
+        success: false,
+        error: 'Unexpected JSON structure',
+      };
+    } catch (error) {
+      console.error('Error structuring job description:', error);
+      return {
+        summary: text,
+        bullets: [],
         success: false,
         error: 'Failed to process text',
       };
@@ -408,10 +532,15 @@ export const useLLM = () => {
     return llmService.polishSummary(text);
   };
 
+  const structureJobDescription = async (text: string) => {
+    return llmService.structureJobDescription(text);
+  };
+
   return {
     initialize,
     polishBullet,
     polishSummary,
+    structureJobDescription,
     progress,
     isLoading,
     isInitialized,
