@@ -18,7 +18,7 @@ import {
 } from '@/lib/validationSchema';
 import { ResumeData } from '@/stores/resumeStore';
 import { TemplateSection } from '@/templates';
-import { Loader2, PlusCircle, Trash2, ZapIcon } from 'lucide-react';
+import { Loader2, PlusCircle, Sparkles, Trash2, ZapIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { UseFormReturn } from 'node_modules/react-hook-form/dist/types/form';
 import { useEffect, useRef, useState } from 'react';
@@ -343,7 +343,15 @@ function JobDescription({
   const [polishedDescription, setPolishedDescription] = useState<string | null>(
     null
   );
-  const { polishSummary, isInitialized } = useLLM();
+  const [isStructuring, setIsStructuring] = useState(false);
+  const [structured, setStructured] = useState<
+    | {
+        summary: string;
+        bullets: string[];
+      }
+    | null
+  >(null);
+  const { polishSummary, structureJobDescription, isInitialized } = useLLM();
 
   const handlePolishDescription = async () => {
     const currentDescription = experience.description;
@@ -383,6 +391,50 @@ function JobDescription({
     setPolishedDescription(null);
   };
 
+  // ----------- Structure generation handlers ----------
+  const handleGenerateStructure = async () => {
+    const inputText = experience.description;
+    if (!inputText || !isInitialized) return;
+
+    try {
+      setIsStructuring(true);
+      const result = await structureJobDescription(inputText);
+      if (result.success) {
+        setStructured({ summary: result.summary, bullets: result.bullets });
+      } else {
+        console.error('Failed to generate structure:', result.error);
+      }
+    } catch (err) {
+      console.error('Error generating structure:', err);
+    } finally {
+      setIsStructuring(false);
+    }
+  };
+
+  const handleAcceptStructured = () => {
+    if (!structured) return;
+
+    updateExperience(experience.id, {
+      description: structured.summary,
+      keyResponsibilities: structured.bullets,
+    });
+
+    form.setValue(
+      `experiences.${index}.description` as FormPath,
+      structured.summary
+    );
+    form.setValue(
+      `experiences.${index}.keyResponsibilities` as FormPath,
+      structured.bullets
+    );
+
+    setStructured(null);
+  };
+
+  const handleRejectStructured = () => {
+    setStructured(null);
+  };
+
   return (
     <>
       {section.fields
@@ -416,28 +468,52 @@ function JobDescription({
                       name={formField.name}
                       ref={formField.ref}
                     />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 bottom-2 text-xs text-muted-foreground opacity-70 hover:opacity-100"
-                      type="button"
-                      onClick={handlePolishDescription}
-                      disabled={
-                        !experience.description || isPolishing || !isInitialized
-                      }
-                    >
-                      {isPolishing ? (
-                        <>
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Polishing...
-                        </>
-                      ) : (
-                        <>
-                          <ZapIcon className="h-3 w-3 mr-1" />
-                          Polish with AI
-                        </>
-                      )}
-                    </Button>
+                    <div className="absolute right-2 bottom-2 flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
+                        onClick={handlePolishDescription}
+                        disabled={
+                          !experience.description || isPolishing || !isInitialized
+                        }
+                      >
+                        {isPolishing ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Polishing...
+                          </>
+                        ) : (
+                          <>
+                            <ZapIcon className="h-3 w-3 mr-1" />
+                            Polish
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
+                        onClick={handleGenerateStructure}
+                        disabled={
+                          !experience.description || isStructuring || !isInitialized
+                        }
+                      >
+                        {isStructuring ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Generate
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -450,6 +526,32 @@ function JobDescription({
                     onReject={handleRejectPolishedDescription}
                     className="mt-3"
                   />
+                )}
+
+                {structured && (
+                  <div className="mt-3 p-4 border rounded-md bg-muted/10">
+                    <h4 className="font-medium mb-2">AI generated suggestion</h4>
+                    <p className="whitespace-pre-wrap">{structured.summary}</p>
+                    {structured.bullets.length > 0 && (
+                      <ul className="list-disc ml-6 mt-2 space-y-1">
+                        {structured.bullets.map((b, i) => (
+                          <li key={i}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="flex gap-2 mt-4">
+                      <Button size="sm" onClick={handleAcceptStructured}>
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleRejectStructured}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </FormItem>
             )}

@@ -18,10 +18,7 @@ export const exportElementToPDF = async (
   filename: string = 'document'
 ): Promise<void> => {
   try {
-    // Create a clone of the element to maintain the original DOM
     const clonedElement = element.cloneNode(true) as HTMLElement;
-
-    // Remove styling that shouldn't appear in print
     if (clonedElement instanceof HTMLElement) {
       clonedElement.style.height = 'auto';
       clonedElement.style.overflow = 'visible';
@@ -32,120 +29,117 @@ export const exportElementToPDF = async (
       clonedElement.style.boxShadow = 'none';
     }
 
-    // Create a temporary container
     const container = document.createElement('div');
     container.style.position = 'absolute';
     container.style.left = '-9999px';
-    container.style.width = '8.5in'; // Letter width
-    container.style.height = 'auto'; // Let it expand as needed
+    container.style.width = '8.5in';
+    container.style.height = 'auto';
     container.style.background = 'white';
     container.style.overflow = 'visible';
-
-    // Add the element to the temporary container
     container.appendChild(clonedElement);
     document.body.appendChild(container);
 
     const canvas = await html2canvas(clonedElement, {
-      scale: 2, // Higher scale for better quality
-      logging: true, // Enable logging to debug issues
+      scale: 2.5,
+      logging: false,
       useCORS: true,
       letterRendering: true,
       allowTaint: true,
-      backgroundColor: '#ffffff', // Force white background
-      foreignObjectRendering: false, // Disable as it may cause issues
-      height: clonedElement.scrollHeight, // Capture full height
+      backgroundColor: '#ffffff',
+      height: clonedElement.scrollHeight,
       windowHeight: clonedElement.scrollHeight,
     });
 
-    // Create PDF with A4 dimensions
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
     });
 
-    // Define page margins (smaller, more reasonable margins)
     const margin = {
-      top: 12.7, // 0.5 inch in mm
+      top: 12.7,
       right: 12.7,
-      bottom: 12.7,
+      bottom: 13.7,
       left: 12.7,
     };
 
-    // Calculate the PDF page dimensions with margins
     const pageWidth = 210; // A4 width in mm
     const pageHeight = 297; // A4 height in mm
     const contentWidth = pageWidth - margin.left - margin.right;
     const contentHeight = pageHeight - margin.top - margin.bottom;
 
-    // Calculate the proper scaling for the image
-    const imgWidth = contentWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    // Calculate pixels per mm based on canvas width and PDF content width
+    const pxPerMm = canvas.width / contentWidth;
+    // Calculate the height of one PDF page's content area in source canvas pixels
+    const pageHeightPx = Math.floor(contentHeight * pxPerMm);
 
-    // Calculate how many pages needed
-    const pagesCount = Math.ceil(imgHeight / contentHeight);
+    let currentCanvasY = 0; // Y position on the source canvas to start copying from
+    let pageNum = 0;
 
-    // For each page, add a slice of the image
-    for (let i = 0; i < pagesCount; i++) {
-      if (i > 0) {
+    while (currentCanvasY < canvas.height) {
+      if (pageNum > 0) {
         pdf.addPage();
       }
 
-      // Calculate the position and height for this slice
-      const sourceY = i * contentHeight * (canvas.height / imgHeight);
-      const sourceHeight = Math.min(
-        contentHeight * (canvas.height / imgHeight),
-        canvas.height - sourceY
+      const remainingCanvasHeight = canvas.height - currentCanvasY;
+      const sliceCaptureHeightPx = Math.min(
+        pageHeightPx,
+        remainingCanvasHeight
       );
 
-      // Create a temporary canvas for this slice
-      const tmpCanvas = document.createElement('canvas');
-      tmpCanvas.width = canvas.width;
-      tmpCanvas.height = sourceHeight;
-      const ctx = tmpCanvas.getContext('2d');
+      if (sliceCaptureHeightPx <= 0) {
+        break; // No more content left
+      }
 
-      // Draw the slice from the original canvas
-      if (ctx) {
-        ctx.drawImage(
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = sliceCaptureHeightPx;
+      const sliceCtx = sliceCanvas.getContext('2d');
+
+      if (sliceCtx) {
+        sliceCtx.drawImage(
           canvas,
           0,
-          sourceY,
+          currentCanvasY, // Source x, y
           canvas.width,
-          sourceHeight,
+          sliceCaptureHeightPx, // Source width, height
           0,
-          0,
+          0, // Destination x, y on sliceCanvas
           canvas.width,
-          sourceHeight
+          sliceCaptureHeightPx // Destination width, height on sliceCanvas
         );
 
-        // Add this slice to the PDF
-        const sliceData = tmpCanvas.toDataURL('image/jpeg', 1.0);
-        const sliceHeight = (sourceHeight * imgWidth) / canvas.width;
+        const sliceDataUrl = sliceCanvas.toDataURL('image/jpeg', 1.0);
+        const sliceHeightOnPdfMm = sliceCaptureHeightPx / pxPerMm;
 
         pdf.addImage(
-          sliceData,
+          sliceDataUrl,
           'JPEG',
           margin.left,
           margin.top,
-          imgWidth,
-          sliceHeight
+          contentWidth,
+          sliceHeightOnPdfMm
         );
+      }
+
+      currentCanvasY += pageHeightPx; // Advance by the exact page height in pixels
+      pageNum++;
+
+      if (pageNum > 50) {
+        // Safety break
+        console.warn('PDF generation: Exceeded 50 pages limit.');
+        break;
       }
     }
 
-    // Save the PDF with file extension
     const formattedFilename = `${filename.replace(/\s+/g, '_')}_${
       new Date().toISOString().split('T')[0]
     }.pdf`;
-
     pdf.save(formattedFilename);
 
-    // Clean up
     document.body.removeChild(container);
-
-    return Promise.resolve();
   } catch (error) {
     console.error('Error generating PDF:', error);
-    return Promise.reject(error);
+    throw error;
   }
 };

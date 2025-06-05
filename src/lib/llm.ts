@@ -38,6 +38,7 @@ class LLMService {
   private loadProgress: number = 0;
   private isInitialized: boolean = false;
   private listeners: Set<(progress: number) => void> = new Set();
+  private initListeners: Set<(isInitialized: boolean) => void> = new Set();
   private engine: MLCEngine | null = null;
 
   constructor(
@@ -101,6 +102,9 @@ class LLMService {
         this.config.model = result.modelUsed;
       }
 
+      // Notify initialization listeners
+      this.initListeners.forEach((listener) => listener(true));
+
       return result.success;
     } catch (error) {
       this.isLoading = false;
@@ -163,6 +167,9 @@ class LLMService {
 
                   // Notify listeners of the final state
                   this.listeners.forEach((listener) => listener(100));
+
+                  // Notify initialization listeners
+                  this.initListeners.forEach((listener) => listener(true));
                 }
               }, 3000);
             }
@@ -181,6 +188,9 @@ class LLMService {
 
         // Force a final progress update to ensure UI is updated
         this.listeners.forEach((listener) => listener(100));
+
+        // Notify initialization listeners
+        this.initListeners.forEach((listener) => listener(true));
 
         return { success: true, modelUsed: modelId };
       } catch (error) {
@@ -225,15 +235,19 @@ class LLMService {
 
       const systemMessage: ChatCompletionSystemMessageParam = {
         role: 'system',
-        content: `You are a friendly career-coach AI. 
-      Rewrite a single resume bullet so it is more natural, concise, and accomplishment-focused by:
-      • Starting with a strong action verb  
-      • Preserving or suggesting realistic numbers/metrics  
-      • Eliminating corporate jargon and filler  
-      • Keeping roughly the same length  
-      • Using a warm but professional tone  
-      
-      IMPORTANT: Your reply must contain **only** the improved bullet text itself—no labels, explanations, markdown, or bullet symbols.`,
+        content: `You are a friendly career-coach AI. Rewrite the user's résumé bullet so it reads like a confident, human voice while staying accomplishment-focused.
+
+        Style & Tone:
+        • Warm, energetic, concise—skip buzzwords like "results-oriented".
+        • Contractions are okay if they feel natural.
+        • No list markers or hyphens—return the sentence only.
+
+        Content Rules:
+        • Begin with a vivid action verb.
+        • Keep roughly the same length (1 succinct sentence).
+        • Include concrete metrics where appropriate.
+
+        IMPORTANT: Reply with ONLY the rewritten sentence (no bullet symbol, no prefixes, no commentary).`,
       };
 
       const userMessage: ChatCompletionUserMessageParam = {
@@ -311,17 +325,20 @@ class LLMService {
 
       const systemMessage: ChatCompletionSystemMessageParam = {
         role: 'system',
-        content: `You're a supportive career coach helping craft a resume summary that stands out.
+        content: `You are a friendly career-coach AI. Rewrite the user's résumé summary so it feels like something they would naturally say when introducing themselves to a colleague.
 
-        Create a summary that feels authentic and human by:
-        - Using natural, conversational language that flows well when read
-        - Highlighting skills and experience in a way that sounds like a real person talking about themselves
-        - Avoiding formulaic phrases and corporate buzzwords that sound artificial
-        - Keeping a good length (around 100-200 words)
-        - Writing in a warm, professional tone with personality
-        - Focusing on unique qualities that tell a compelling story
-        
-        IMPORTANT: Return ONLY the improved text WITHOUT ANY INTRODUCTION OR PREFIX WHATSOEVER. Do not add phrases like "that sounds more natural" or "summary that's more impactful". Start directly with the first word of the actual summary.`,
+        Style & Tone:
+        • Warm, conversational, confident—avoid corporate buzzwords like "results-driven" or "highly skilled".
+        • Use plain English and varied sentence length; contractions (I'm, I've) are welcome if they sound natural.
+        • Keep it first-person implied: no "I" unless it genuinely improves flow.
+        • One short paragraph, 3-4 sentences (~80-120 words). No lists.
+
+        Content:
+        • Highlight key experience, primary tech stack, and collaboration strengths.
+        • Include one concrete fact or metric if it fits naturally (e.g., "7 years" of experience).
+        • End with a forward-looking statement that shows curiosity or passion for learning.
+
+        IMPORTANT: Return ONLY the rewritten paragraph—no labels, prefixes, or extra commentary.`,
       };
 
       const userMessage: ChatCompletionUserMessageParam = {
@@ -339,9 +356,15 @@ class LLMService {
       // Extract the polished text from the response and clean it
       let improvedText = response.choices[0]?.message.content?.trim() || text;
 
-      // Remove common prefixes that the model might add despite instructions
+      // Remove common prefixes the model might still add despite instructions
       improvedText = improvedText.replace(
-        /^(here['']s |here is |i['']ve |i have |that sounds |that['']s |bullet point |summary |content )?(more impactful|more natural|more compelling|improved|better|clearer|stronger|enhanced|refined)( and )?(natural|impactful|compelling|professional|effective)?:?\s*/i,
+        /^(here['’]?s\s+)?(a\s+)?(revised|rewritten|improved)?\s*(resume\s+)?summary(\s+that['’]?s?\s+|\s+that\s+is\s+)?(more\s+)?(impactful|natural|compelling|professional|effective|concise)[^:]*:\s*/i,
+        ''
+      );
+
+      // Additional catch-all removal for generic lead-ins like "Here's the ...:" or "Here is the ...:"
+      improvedText = improvedText.replace(
+        /^here['’]?s\s+(the\s+)?(rewritten|revised|improved)\s+summary\s*:?/i,
         ''
       );
 
@@ -400,7 +423,20 @@ class LLMService {
 
       const systemMessage: ChatCompletionSystemMessageParam = {
         role: 'system',
-        content: `You are a seasoned career coach helping job seekers craft compelling résumé content.\n\nGiven an unstructured description of what someone did in a particular role, produce:\n1. A short 1–2 sentence role summary that highlights overall impact.\n2. A list of 3-6 accomplishment-focused bullet points that start with strong action verbs and, when reasonable, include quantifiable metrics.\n\nIMPORTANT FORMAT: Return ONLY valid single-line JSON with the shape {"summary": string, "bullets": string[] }. Do NOT wrap in markdown or add any extra words.`,
+        content: `You are a supportive career-coach AI helping transform rough job descriptions into résumé-ready content.
+
+        Output requirements (JSON only): {"summary": string, "bullets": string[] }
+
+        For the "summary":
+        • One warm, conversational paragraph (1–2 sentences, ~30–40 words).
+        • Highlight the role's impact and scope without corporate jargon.
+
+        For each element in "bullets":
+        • Single concise sentence starting with a strong action verb.
+        • Include a tangible metric or outcome when it feels natural.
+        • Avoid buzzwords; keep language human and engaging.
+
+        IMPORTANT: Return ONLY the JSON object on a single line—no markdown, no commentary.`,
       };
 
       const userMessage: ChatCompletionUserMessageParam = {
@@ -421,22 +457,22 @@ class LLMService {
 
       let parsed: JobStructureResult | null = null;
       try {
-        parsed = JSON.parse(raw);
+        const safe = raw
+          .trim()
+          // Remove any leading text before first brace and trailing text after last brace
+          .replace(/^[\s\S]*?(\{[\s\S]*?\}).*$/s, '$1')
+          .replace(/,\s*}/g, '}')
+          .replace(/,\s*]/g, ']');
+        parsed = JSON.parse(safe);
       } catch (parseErr) {
         console.warn('Failed to parse JSON. Attempting recovery.', parseErr);
-        // Attempt to fix common JSON issues, such as trailing commas
-        try {
-          const safe = raw.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-          parsed = JSON.parse(safe);
-        } catch {
-          // Give up – return raw text as summary
-          return {
-            summary: raw || text,
-            bullets: [],
-            success: false,
-            error: 'Malformed JSON returned by LLM',
-          };
-        }
+        // Give up – return raw text as summary
+        return {
+          summary: raw || text,
+          bullets: [],
+          success: false,
+          error: 'Malformed JSON returned by LLM',
+        };
       }
 
       if (
@@ -479,6 +515,18 @@ class LLMService {
   }
 
   /**
+   * Subscribe to initialization state changes
+   * @param callback Function to call when initialization state changes
+   * @returns Unsubscribe function
+   */
+  subscribeToInitialization(
+    callback: (isInitialized: boolean) => void
+  ): () => void {
+    this.initListeners.add(callback);
+    return () => this.initListeners.delete(callback);
+  }
+
+  /**
    * Get the current loading state
    */
   getLoadingState() {
@@ -507,11 +555,30 @@ export const useLLM = () => {
     setProgress(state.progress);
 
     // Subscribe to progress updates
-    const unsubscribe = llmService.subscribeToProgress((newProgress) => {
-      setProgress(newProgress);
-    });
+    const unsubscribeProgress = llmService.subscribeToProgress(
+      (newProgress) => {
+        setProgress(newProgress);
+      }
+    );
 
-    return unsubscribe;
+    // Subscribe to initialization state changes
+    const unsubscribeInit = llmService.subscribeToInitialization(
+      (initialized) => {
+        setIsInitialized(initialized);
+      }
+    );
+
+    // Auto-initialize if not already initialized
+    if (!state.isInitialized && !state.isLoading) {
+      llmService.initialize().then((success) => {
+        setIsInitialized(success);
+      });
+    }
+
+    return () => {
+      unsubscribeProgress();
+      unsubscribeInit();
+    };
   }, []);
 
   const initialize = async () => {

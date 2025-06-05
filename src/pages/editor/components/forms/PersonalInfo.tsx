@@ -15,7 +15,7 @@ import { FormPath, ResumeFormData } from '@/lib/validationSchema';
 import { ResumeData } from '@/stores/resumeStore';
 import { TemplateSection } from '@/templates';
 import { Loader2, ZapIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 function PersonalInfo({
@@ -32,31 +32,13 @@ function PersonalInfo({
   const [isPolishingSummary, setIsPolishingSummary] = useState(false);
   const [polishedSummary, setPolishedSummary] = useState<string | null>(null);
   const { polishSummary, isInitialized } = useLLM();
-  const [forceReady, setForceReady] = useState(false);
-
-  // Listen for custom initialization event
-  useEffect(() => {
-    const handleInitialized = () => {
-      console.log('LLM initialization event received');
-      setForceReady(true);
-    };
-
-    window.addEventListener('llm-initialized', handleInitialized);
-
-    return () => {
-      window.removeEventListener('llm-initialized', handleInitialized);
-    };
-  }, []);
-
-  // Combine the real initialization state with our forced ready state
-  const isReady = isInitialized || forceReady;
 
   const handlePolishSummary = async () => {
     const currentSummary = resumeData.personalInfo.summary;
     if (!currentSummary) return;
 
     // Display a message if LLM is not ready
-    if (!isReady) {
+    if (!isInitialized) {
       alert(
         'Our AI helper is still warming up. Give it a moment and try again!'
       );
@@ -171,7 +153,7 @@ function PersonalInfo({
                     type="button"
                     onClick={handlePolishSummary}
                     disabled={
-                      !formField.value || isPolishingSummary || !isReady
+                      !formField.value || isPolishingSummary || !isInitialized
                     }
                   >
                     {isPolishingSummary ? (
