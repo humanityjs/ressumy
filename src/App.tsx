@@ -7,7 +7,6 @@ import SignUp from '@/pages/auth/SignUp';
 import EditorPage from '@/pages/editor/EditorPage';
 import Home from '@/pages/home/Home';
 import TemplatePage from '@/pages/templates/TemplatePage';
-import UploadPage from '@/pages/upload/UploadPage';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -56,10 +55,10 @@ const router = createBrowserRouter([
         path: 'editor',
         element: <EditorPage />,
       },
-      {
-        path: 'upload',
-        element: <UploadPage />,
-      },
+      // {
+      //   path: 'upload',
+      //   element: <UploadPage />,
+      // },
       // Protected routes could be added here with the ProtectedRoute component
       // Example:
       // {
