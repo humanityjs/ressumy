@@ -38,7 +38,7 @@ function SkillsSection({
       <Separator className="my-4" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {resumeData.skills.map((skill, index) => (
+        {resumeData.skills.map((_, index) => (
           <FormField
             key={index}
             control={form.control}
