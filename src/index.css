@@ -128,7 +128,7 @@
 
 /* 2 – draw our own bullet */
 .pdf-list > li {
-  position: relative;        /* we’ll anchor ::before to this box   */
+  position: relative;        /* we'll anchor ::before to this box   */
   padding-left: 1.1em;       /* 3 – space reserved for every line   */
 }
 
@@ -139,4 +139,181 @@
   line-height: 1.15em;       /* ≈ same as your text line-height     */
   font-weight: 700;          /* makes the dot solid                 */
   font-size: 1em;            /* bullet the same size as the text    */
+}
+
+/* Custom animations */
+
+/* Custom animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s ease-out forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+/* Grid pattern background */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Custom hover effects */
+.hover-lift {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* New animated gradient background */
+@keyframes gradient-xy {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+.animate-gradient-xy {
+  background-size: 200% 200%;
+  animation: gradient-xy 20s ease infinite;
+}
+
+/* Slow pulse for accent blobs */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Scale-in-up animation for cards */
+@keyframes scale-in-up {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-scale-in-up {
+  animation: scale-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0; /* start hidden */
+}
+
+/* Aurora background effect */
+@keyframes aurora {
+  from {
+    background-position: 50% 50%, 50% 50%;
+  }
+  to {
+    background-position: 350% 50%, 350% 50%;
+  }
+}
+
+.bg-aurora {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-aurora::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 100% 0, oklch(var(--primary) / 0.15), transparent 50%),
+    radial-gradient(ellipse at 0 100%, oklch(var(--accent) / 0.15), transparent 50%);
+  background-size: 800px 800px, 600px 600px;
+  background-repeat: no-repeat;
+  animation: aurora 20s linear infinite;
+  z-index: 0;
+}
+
+.dark .bg-aurora::before {
+  background-image:
+    radial-gradient(ellipse at 100% 0, oklch(var(--primary) / 0.2), transparent 50%),
+    radial-gradient(ellipse at 0 100%, oklch(var(--accent) / 0.2), transparent 50%);
+}
+
+/* Button glow effect */
+.btn-glow:hover {
+  box-shadow:
+    0 0 20px 0px oklch(var(--primary) / 0.3),
+    0 0 30px 0px oklch(var(--primary) / 0.2);
 }
