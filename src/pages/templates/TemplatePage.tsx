@@ -1,14 +1,18 @@
 import { Button } from '@/components/ui/button';
+import { generateSamplePDF } from '@/lib/utils';
 import { Template, templates } from '@/templates';
-import { ArrowLeft, ArrowRight, Check, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Download, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+
+
 
 function TemplatePage() {
   const navigate = useNavigate();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     templates[0].id
   );
+  const [downloadingTemplate, setDownloadingTemplate] = useState<string | null>(null);
 
   const handleTemplateSelect = (templateId: string) => {
     const template = templates.find((t) => t.id === templateId);
@@ -19,6 +23,10 @@ function TemplatePage() {
 
   const handleContinue = () => {
     navigate(`/editor?template=${selectedTemplateId}`);
+  };
+
+  const handleDownloadSample = (template: Template) => {
+    generateSamplePDF(template, setDownloadingTemplate);
   };
 
   return (
@@ -40,7 +48,7 @@ function TemplatePage() {
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Choose a Template</h1>
             <p className="text-muted-foreground">
-              Select a template to get started with your résumé
+              Select from our collection of professional templates - all completely free
             </p>
           </div>
 
@@ -51,6 +59,8 @@ function TemplatePage() {
                 template={template}
                 isSelected={selectedTemplateId === template.id}
                 onSelect={handleTemplateSelect}
+                onDownloadSample={handleDownloadSample}
+                isDownloading={downloadingTemplate === template.id}
               />
             ))}
           </div>
@@ -71,9 +81,17 @@ interface TemplateCardProps {
   template: Template;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  onDownloadSample: (template: Template) => void;
+  isDownloading: boolean;
 }
 
-function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
+function TemplateCard({ 
+  template, 
+  isSelected, 
+  onSelect, 
+  onDownloadSample, 
+  isDownloading 
+}: TemplateCardProps) {
   return (
     <div
       className={`
@@ -89,9 +107,11 @@ function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
             : 'cursor-pointer'
         }
       `}
-      onClick={() => onSelect(template.id)}
     >
-      <div className="relative aspect-[3/4] bg-zinc-100 dark:bg-zinc-800">
+      <div 
+        className="relative aspect-[3/4] bg-zinc-100 dark:bg-zinc-800"
+        onClick={() => onSelect(template.id)}
+      >
         {/* Template Thumbnail */}
         <img
           src={template.thumbnail}
@@ -115,9 +135,37 @@ function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
             </div>
           </div>
         )}
+
+        {/* Download Sample Button */}
+        {!template.isComingSoon && (
+          <div className="absolute bottom-2 left-2 right-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full bg-background/90 backdrop-blur-sm hover:bg-background/95 text-xs cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDownloadSample(template);
+              }}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="w-3 h-3 mr-2" />
+                  Download Sample
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="p-4">
+      <div className="p-4" onClick={() => onSelect(template.id)}>
         <h3 className="font-semibold mb-1">{template.name}</h3>
         <p className="text-sm text-muted-foreground">{template.description}</p>
       </div>

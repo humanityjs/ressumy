@@ -34,7 +34,7 @@ function Home() {
             <div className="inline-flex items-center gap-2 animate-fade-in">
               <Badge variant="secondary" className="px-3 py-1 text-sm font-medium">
                 <Sparkles className="w-3 h-3 mr-1" />
-                100% Privacy-First
+                100% Free Forever
               </Badge>
             </div>
 
@@ -48,7 +48,7 @@ function Home() {
               <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                 Create stunning, professional résumés that land interviews.
                 <span className="block mt-2 text-lg opacity-80">
-                  Powered by AI. Protected by privacy. Perfected by you.
+                  Completely free. AI support when you need it. Privacy-protected.
                 </span>
               </p>
             </div>
@@ -62,7 +62,7 @@ function Home() {
               >
                 <Link to="/templates">
                   <FileText className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                  Create Your Résumé
+                  Start Creating Free
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link> 
               </Button>
@@ -91,7 +91,7 @@ function Home() {
               Why Choose Ressumy?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Experience the future of résumé creation with our privacy-first, AI-powered platform
+              A powerful, privacy-first platform that puts you in control of your resume creation
             </p>
           </div>
 
@@ -199,7 +199,7 @@ function Home() {
               Ready to Land Your Dream Job?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of professionals who've created their perfect résumé with Ressumy
+              Join thousands of professionals who've created their perfect résumé with Ressumy - completely free, forever
             </p>
           </div>
           
@@ -210,7 +210,7 @@ function Home() {
               onClick={() => (window.location.href = '/templates')}
             >
               <Zap className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-              Start Creating Now
+              Start Building Free
             </Button>
           </div>
         </div>
@@ -221,16 +221,16 @@ function Home() {
 
 const privacyFeatures = [
   {
-    title: '100% Private & Secure',
-    icon: <Shield className="h-8 w-8" />,
-    description:
-      'Your personal data never leaves your device. All processing happens locally in your browser with military-grade security.',
-  },
-  {
-    title: 'AI-Powered Optimization',
+    title: '100% Free Forever',
     icon: <Zap className="h-8 w-8" />,
     description:
-      'Our advanced AI runs entirely on your device to polish your content, optimize keywords, and enhance readability.',
+      'No hidden costs, no premium tiers, no subscriptions. All features completely free because job searching shouldn\'t cost money.',
+  },
+  {
+    title: 'AI Writing Support',
+    icon: <Shield className="h-8 w-8" />,
+    description:
+      'Get optional AI assistance to polish content and optimize keywords. Runs entirely on your device when you choose to use it.',
   },
   {
     title: 'Works Offline',
@@ -249,7 +249,7 @@ const processSteps = [
   {
     title: 'Add Your Details',
     icon: <Edit3 className="h-8 w-8" />,
-    description: 'Fill in your information with our intuitive editor. AI suggestions help you write compelling content.',
+    description: 'Fill in your information with our intuitive editor. Use optional AI suggestions to help polish your content.',
   },
   {
     title: 'Download & Apply',

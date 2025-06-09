@@ -1,7 +1,9 @@
+import { Template } from '@/templates';
 import { type ClassValue, clsx } from 'clsx';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 import { twMerge } from 'tailwind-merge';
+import { sampleResumeData } from './sampleData';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -141,5 +143,66 @@ export const exportElementToPDF = async (
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;
+  }
+};
+
+/**
+ * Generates a sample PDF for a given template
+ * @param template The template to generate a sample for
+ * @param setDownloadingTemplate Function to update downloading state
+ * @returns Promise resolving when the PDF has been generated and downloaded
+ */
+export const generateSamplePDF = async (
+  template: Template,
+  setDownloadingTemplate: (id: string | null) => void
+): Promise<void> => {
+  if (template.isComingSoon) return;
+
+  setDownloadingTemplate(template.id);
+
+  try {
+    // Create a temporary container for rendering
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '-9999px';
+    tempContainer.style.width = '210mm';
+    tempContainer.style.minHeight = '297mm';
+    tempContainer.style.padding = '20mm';
+    tempContainer.style.backgroundColor = 'white';
+    tempContainer.style.color = 'black';
+
+    document.body.appendChild(tempContainer);
+
+    // Create a React root and render the template
+    const { createRoot } = await import('react-dom/client');
+    const root = createRoot(tempContainer);
+
+    // Import React for JSX
+    const React = await import('react');
+
+    const TemplateComponent = template.component;
+
+    await new Promise<void>((resolve) => {
+      root.render(
+        React.createElement(TemplateComponent, {
+          data: sampleResumeData,
+        })
+      );
+
+      // Wait for render to complete
+      setTimeout(resolve, 500);
+    });
+
+    // Export to PDF
+    await exportElementToPDF(tempContainer, `${template.name}-Sample`);
+
+    // Cleanup
+    root.unmount();
+    document.body.removeChild(tempContainer);
+  } catch (error) {
+    console.error('Error generating sample PDF:', error);
+  } finally {
+    setDownloadingTemplate(null);
   }
 };
