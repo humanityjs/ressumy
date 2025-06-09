@@ -140,7 +140,7 @@ export function LLMInitializer() {
                 ? 'Just finishing up...'
                 : stuckCounter > 2
                 ? 'Taking a bit longer than usual... hang tight!'
-                : 'Loading AI text helper. This might take a minute on first use.'}
+                : 'Loading AI text helper. This might take a few minutes on first use.'}
             </p>
           </>
         )}
