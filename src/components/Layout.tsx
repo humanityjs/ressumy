@@ -1,8 +1,9 @@
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
+import { ResumyLogo } from '@/components/ui/ressumy-logo';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Eye, FileText, Github, Heart, Linkedin, Save, X } from 'lucide-react';
+import { Eye, Github, Heart, Linkedin, Save, X } from 'lucide-react';
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
 
@@ -34,12 +35,9 @@ export function Layout() {
       <header className="border-b bg-card/95 backdrop-blur-sm z-50 sticky top-0">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative p-1.5 sm:p-2 bg-primary/10 rounded-lg text-primary group-hover:bg-primary/20 transition-colors duration-300">
-                  <FileText className="size-4 sm:size-5" />
-                </div>
+            <Link to="/" className="group flex items-center gap-2 sm:gap-3 transition-all duration-300 hover:scale-105">
+              <div className="relative p-1.5 sm:p-2 bg-primary/10 rounded-lg text-primary group-hover:bg-primary/20 transition-colors duration-300">
+                <ResumyLogo size={16} className="sm:w-5 sm:h-5" />
               </div>
               <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 Ressumy
@@ -212,7 +210,7 @@ export function Layout() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                  <FileText className="size-5" />
+                  <ResumyLogo size={20} />
                 </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                   Ressumy

@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { TextComparison } from '@/components/ui/text-comparison';
 import { Textarea } from '@/components/ui/textarea';
 import { useLLM } from '@/lib/llm';
+import { hasAICapability } from '@/lib/utils';
 import {
   ExtendedExperience,
   FormPath,
@@ -43,7 +44,13 @@ function ResponsibilityItem({
 }: ResponsibilityItemProps) {
   const [isPolishing, setIsPolishing] = useState(false);
   const [polishedText, setPolishedText] = useState<string | null>(null);
+  const [hasAI, setHasAI] = useState(true);
   const { polishBullet, isInitialized } = useLLM();
+
+  // Check if device supports AI features
+  useEffect(() => {
+    setHasAI(hasAICapability());
+  }, []);
 
   const handlePolishBullet = async () => {
     if (!value.trim() || !isInitialized) return;
@@ -97,26 +104,28 @@ function ResponsibilityItem({
             ref={registerRef}
           />
           <div className="flex justify-end mt-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
-              type="button"
-              onClick={handlePolishBullet}
-              disabled={!value.trim() || isPolishing || !isInitialized}
-            >
-              {isPolishing ? (
-                <>
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  Polishing...
-                </>
-              ) : (
-                <>
-                  <ZapIcon className="h-3 w-3 mr-1" />
-                  Polish bullet
-                </>
-              )}
-            </Button>
+            {hasAI && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground opacity-70 hover:opacity-100 h-6 px-2"
+                type="button"
+                onClick={handlePolishBullet}
+                disabled={!value.trim() || isPolishing || !isInitialized}
+              >
+                {isPolishing ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Polishing...
+                  </>
+                ) : (
+                  <>
+                    <ZapIcon className="h-3 w-3 mr-1" />
+                    Polish bullet
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
         <Button
@@ -351,7 +360,13 @@ function JobDescription({
       }
     | null
   >(null);
+  const [hasAI, setHasAI] = useState(true);
   const { polishSummary, structureJobDescription, isInitialized } = useLLM();
+
+  // Check if device supports AI features
+  useEffect(() => {
+    setHasAI(hasAICapability());
+  }, []);
 
   const handlePolishDescription = async () => {
     const currentDescription = experience.description;
@@ -468,52 +483,54 @@ function JobDescription({
                       name={formField.name}
                       ref={formField.ref}
                     />
-                    <div className="absolute right-2 bottom-2 flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                        className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
-                        onClick={handlePolishDescription}
-                        disabled={
-                          !experience.description || isPolishing || !isInitialized
-                        }
-                      >
-                        {isPolishing ? (
-                          <>
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            Polishing...
-                          </>
-                        ) : (
-                          <>
-                            <ZapIcon className="h-3 w-3 mr-1" />
-                            Polish
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                        className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
-                        onClick={handleGenerateStructure}
-                        disabled={
-                          !experience.description || isStructuring || !isInitialized
-                        }
-                      >
-                        {isStructuring ? (
-                          <>
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            Generate
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    {hasAI && (
+                      <div className="absolute right-2 bottom-2 flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
+                          onClick={handlePolishDescription}
+                          disabled={
+                            !experience.description || isPolishing || !isInitialized
+                          }
+                        >
+                          {isPolishing ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Polishing...
+                            </>
+                          ) : (
+                            <>
+                              <ZapIcon className="h-3 w-3 mr-1" />
+                              Polish
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
+                          onClick={handleGenerateStructure}
+                          disabled={
+                            !experience.description || isStructuring || !isInitialized
+                          }
+                        >
+                          {isStructuring ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Generate
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </FormControl>
                 <FormMessage />

@@ -43,7 +43,7 @@ class LLMService {
 
   constructor(
     config: LLMConfig = {
-      model: 'Llama-3.1-8B-Instruct-q4f16_1-MLC',
+      model: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
       temperature: 0.7,
       maxTokens: 512,
     }
@@ -77,14 +77,15 @@ class LLMService {
         if (progressCallback) progressCallback(report);
       };
 
-      // Try to initialize with primary model - if that fails, try alternatives
+      // Try smallest models first for fastest loading - using correct WebLLM model IDs
       const modelOptions = [
         this.config.model,
-        'Llama-3.1-8B-Instruct-q4f16_1-MLC',
-        'Llama-3.1-8B-Instruct-q4f32_1-MLC',
-        'Gemma-2b-it-q4f16_1',
-        'Phi-3-mini-4k-instruct-q4f16_1',
-        'Mistral-7B-Instruct-v0.3-q4f16_1',
+        'Llama-3.2-1B-Instruct-q4f16_1-MLC', // ~879MB - Ultra-small and very fast
+        'gemma-2-2b-it-q4f16_1-MLC', // ~1.9GB - Google's small model, efficient
+        'Llama-3.2-3B-Instruct-q4f16_1-MLC', // ~2.3GB - Good balance of size and performance
+        'Phi-3-mini-4k-instruct-q4f16_1-MLC', // ~3.7GB - Microsoft's small model, good at reasoning
+        'Mistral-7B-Instruct-v0.3-q4f16_1-MLC', // ~4.6GB - Larger fallback
+        'Llama-3.1-8B-Instruct-q4f16_1-MLC', // ~5.0GB - Original larger model as final fallback
       ];
 
       const result = await this.tryInitializeModel(
@@ -329,16 +330,16 @@ class LLMService {
 
         Style & Tone:
         • Warm, conversational, confident—avoid corporate buzzwords like "results-driven" or "highly skilled".
-        • Use plain English and varied sentence length; contractions (I'm, I've) are welcome if they sound natural.
+        • Use plain English and varied sentence length; contractions (I'm, I've) are welcome **but DO NOT open with a greeting such as "Hi, I'm"**.
         • Keep it first-person implied: no "I" unless it genuinely improves flow.
-        • One short paragraph, 3-4 sentences (~80-120 words). No lists.
+        • One short paragraph, 3-4 sentences (~80-110 words). No lists.
 
         Content:
         • Highlight key experience, primary tech stack, and collaboration strengths.
         • Include one concrete fact or metric if it fits naturally (e.g., "7 years" of experience).
         • End with a forward-looking statement that shows curiosity or passion for learning.
 
-        IMPORTANT: Return ONLY the rewritten paragraph—no labels, prefixes, or extra commentary.`,
+        IMPORTANT: Return ONLY the rewritten paragraph—no greetings, labels, no quotes, no commentary.`,
       };
 
       const userMessage: ChatCompletionUserMessageParam = {
@@ -358,13 +359,13 @@ class LLMService {
 
       // Remove common prefixes the model might still add despite instructions
       improvedText = improvedText.replace(
-        /^(here['’]?s\s+)?(a\s+)?(revised|rewritten|improved)?\s*(resume\s+)?summary(\s+that['’]?s?\s+|\s+that\s+is\s+)?(more\s+)?(impactful|natural|compelling|professional|effective|concise)[^:]*:\s*/i,
+        /^(here['']s\s+)?(a\s+)?(revised|rewritten|improved)?\s*(resume\s+)?summary(\s+that['']s?\s+|\s+that\s+is\s+)?(more\s+)?(impactful|natural|compelling|professional|effective|concise)[^:]*:\s*/i,
         ''
       );
 
       // Additional catch-all removal for generic lead-ins like "Here's the ...:" or "Here is the ...:"
       improvedText = improvedText.replace(
-        /^here['’]?s\s+(the\s+)?(rewritten|revised|improved)\s+summary\s*:?/i,
+        /^here['']s\s+(the\s+)?(rewritten|revised|improved)\s+summary\s*:?/i,
         ''
       );
 
@@ -378,7 +379,27 @@ class LLMService {
       improvedText = improvedText.replace(/^["'](.+)["']$/s, '$1');
       improvedText = improvedText.replace(/^(.+):$/s, '$1');
 
-      return { polishedText: improvedText, success: true };
+      // Trim common intro or outro commentary (e.g., "Here's a rewritten version...")
+      improvedText = improvedText.replace(
+        /^here['']s\s+(a\s+)?(rewritten|revised|improved|updated)\s+version[^:]*:\s*/i,
+        ''
+      );
+
+      // Remove trailing coaching lines like "This revised summary aims to..." or "Let me know..."
+      improvedText = improvedText.replace(
+        /(this\s+(revised|rewritten|improved|updated)\s+summary[^.]*\.)[\s\S]*$/i,
+        ''
+      );
+      improvedText = improvedText.replace(/let\s+me\s+know[^.]*\.$/i, '');
+
+      // Keep only the first non-empty paragraph (avoids extra commentary)
+      const firstParagraph = improvedText
+        .split(/\n+/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0)[0];
+      improvedText = firstParagraph || improvedText.trim();
+
+      return { polishedText: improvedText.trim(), success: true };
     } catch (error) {
       console.error('Error polishing summary text:', error);
       return {
@@ -459,11 +480,28 @@ class LLMService {
       try {
         const safe = raw
           .trim()
-          // Remove any leading text before first brace and trailing text after last brace
+          // Extract first {...}
           .replace(/^[\s\S]*?(\{[\s\S]*?\}).*$/s, '$1')
+          // Remove trailing commas
           .replace(/,\s*}/g, '}')
           .replace(/,\s*]/g, ']');
-        parsed = JSON.parse(safe);
+
+        console.log('safe', safe);
+
+        // Attempt direct parse first
+        try {
+          parsed = JSON.parse(safe);
+        } catch {
+          // Fallback: fix single quotes and unquoted keys
+          const fixed = safe
+            // Quote object keys if missing quotes
+            .replace(/([,{]\s*)([A-Za-z0-9_]+)\s*:/g, '$1"$2":')
+            // Replace single-quoted strings with double quotes
+            .replace(/'([^']*)'/g, '"$1"')
+            .replace(/[“”]/g, '"')
+            .replace(/[‘’]/g, "'");
+          parsed = JSON.parse(fixed);
+        }
       } catch (parseErr) {
         console.warn('Failed to parse JSON. Attempting recovery.', parseErr);
         // Give up – return raw text as summary
