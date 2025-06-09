@@ -11,11 +11,12 @@ import { Separator } from '@/components/ui/separator';
 import { TextComparison } from '@/components/ui/text-comparison';
 import { Textarea } from '@/components/ui/textarea';
 import { useLLM } from '@/lib/llm';
+import { hasAICapability } from '@/lib/utils';
 import { FormPath, ResumeFormData } from '@/lib/validationSchema';
 import { ResumeData } from '@/stores/resumeStore';
 import { TemplateSection } from '@/templates';
 import { Loader2, ZapIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 function PersonalInfo({
@@ -31,7 +32,13 @@ function PersonalInfo({
 }) {
   const [isPolishingSummary, setIsPolishingSummary] = useState(false);
   const [polishedSummary, setPolishedSummary] = useState<string | null>(null);
+  const [hasAI, setHasAI] = useState(true);
   const { polishSummary, isInitialized } = useLLM();
+
+  // Check if device supports AI features
+  useEffect(() => {
+    setHasAI(hasAICapability());
+  }, []);
 
   const handlePolishSummary = async () => {
     const currentSummary = resumeData.personalInfo.summary;
@@ -146,28 +153,30 @@ function PersonalInfo({
                       <span className="text-red-500 ml-1">*</span>
                     )}
                   </FormLabel>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs h-7 px-2 text-muted-foreground opacity-70 hover:opacity-100"
-                    type="button"
-                    onClick={handlePolishSummary}
-                    disabled={
-                      !formField.value || isPolishingSummary || !isInitialized
-                    }
-                  >
-                    {isPolishingSummary ? (
-                      <>
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        Working on it...
-                      </>
-                    ) : (
-                      <>
-                        <ZapIcon className="h-3 w-3 mr-1" />
-                        Enhance with AI
-                      </>
-                    )}
-                  </Button>
+                  {hasAI && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 px-2 text-muted-foreground opacity-70 hover:opacity-100"
+                      type="button"
+                      onClick={handlePolishSummary}
+                      disabled={
+                        !formField.value || isPolishingSummary || !isInitialized
+                      }
+                    >
+                      {isPolishingSummary ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Working on it...
+                        </>
+                      ) : (
+                        <>
+                          <ZapIcon className="h-3 w-3 mr-1" />
+                          Enhance with AI
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
                 <FormControl>
                   <Textarea

@@ -206,3 +206,49 @@ export const generateSamplePDF = async (
     setDownloadingTemplate(null);
   }
 };
+
+/**
+ * Detects if the user is on a mobile device
+ * @returns boolean indicating if the device is mobile
+ */
+export const isMobileDevice = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  // Check user agent for mobile indicators
+  const mobileRegex =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  const isMobileUserAgent = mobileRegex.test(navigator.userAgent);
+
+  // Check screen size (mobile is typically <= 768px wide)
+  const isSmallScreen = window.innerWidth <= 768;
+
+  // Check for touch capability
+  const isTouchDevice =
+    'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  // Return true if any mobile indicator is present
+  return isMobileUserAgent || (isSmallScreen && isTouchDevice);
+};
+
+/**
+ * Checks if the device has sufficient resources for AI processing
+ * @returns boolean indicating if AI features should be available
+ */
+export const hasAICapability = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  // Mobile devices typically don't have enough resources for web LLMs
+  if (isMobileDevice()) return false;
+
+  // Check for WebAssembly support (required for web LLM)
+  if (typeof WebAssembly === 'undefined') return false;
+
+  // Check available memory (rough estimate) - deviceMemory is experimental
+  const navigatorWithMemory = navigator as Navigator & {
+    deviceMemory?: number;
+  };
+  const memory = navigatorWithMemory.deviceMemory;
+  if (memory && memory < 4) return false; // Less than 4GB RAM
+
+  return true;
+};
