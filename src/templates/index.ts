@@ -21,6 +21,7 @@ export interface Template {
   id: string;
   name: string;
   description: string;
+  category: 'professional' | 'modern' | 'creative' | 'executive' | 'minimal';
   thumbnail: string;
   component: React.ComponentType<{ data?: ResumeData }>;
   sections: TemplateSection[];
@@ -33,6 +34,7 @@ const basicTemplate: Template = {
   id: 'basic',
   name: 'Professional',
   description: 'A clean, professional template with a traditional layout',
+  category: 'professional',
   thumbnail: '/templates/basic-thumbnail.svg',
   component: BasicTemplate,
   sections: [
@@ -180,6 +182,7 @@ const modernTemplate: Template = {
   id: 'modern',
   name: 'Modern',
   description: 'A contemporary template with a fresh, innovative layout',
+  category: 'modern',
   thumbnail: '/templates/modern-thumbnail.svg',
   component: BasicTemplate,
   sections: [],
@@ -191,7 +194,56 @@ const creativeTemplate: Template = {
   id: 'creative',
   name: 'Creative',
   description: 'A bold, eye-catching template for creative professionals',
+  category: 'creative',
   thumbnail: '/templates/creative-thumbnail.svg',
+  component: BasicTemplate,
+  sections: [],
+  isComingSoon: true,
+};
+
+// Executive template (coming soon)
+const executiveTemplate: Template = {
+  id: 'executive',
+  name: 'Executive',
+  description: 'A prestigious template for senior leadership roles',
+  category: 'executive',
+  thumbnail: '/templates/executive-thumbnail.svg',
+  component: BasicTemplate,
+  sections: [],
+  isComingSoon: true,
+};
+
+// Minimal template (coming soon)
+const minimalTemplate: Template = {
+  id: 'minimal',
+  name: 'Minimal',
+  description: 'A clean, distraction-free template focusing on content',
+  category: 'minimal',
+  thumbnail: '/templates/minimal-thumbnail.svg',
+  component: BasicTemplate,
+  sections: [],
+  isComingSoon: true,
+};
+
+// Modern Gradient template (coming soon)
+const modernGradientTemplate: Template = {
+  id: 'modern-gradient',
+  name: 'Modern Gradient',
+  description: 'A contemporary template with stylish gradient accents',
+  category: 'modern',
+  thumbnail: '/templates/modern-gradient-thumbnail.svg',
+  component: BasicTemplate,
+  sections: [],
+  isComingSoon: true,
+};
+
+// Creative Portfolio template (coming soon)
+const creativePortfolioTemplate: Template = {
+  id: 'creative-portfolio',
+  name: 'Creative Portfolio',
+  description: 'Perfect for designers and creative professionals',
+  category: 'creative',
+  thumbnail: '/templates/creative-portfolio-thumbnail.svg',
   component: BasicTemplate,
   sections: [],
   isComingSoon: true,
@@ -202,6 +254,10 @@ export const templates: Template[] = [
   basicTemplate,
   modernTemplate,
   creativeTemplate,
+  executiveTemplate,
+  minimalTemplate,
+  modernGradientTemplate,
+  creativePortfolioTemplate,
 ];
 
 // Export a function to get a template by ID
