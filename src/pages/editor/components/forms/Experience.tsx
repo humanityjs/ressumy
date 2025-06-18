@@ -353,13 +353,10 @@ function JobDescription({
     null
   );
   const [isStructuring, setIsStructuring] = useState(false);
-  const [structured, setStructured] = useState<
-    | {
-        summary: string;
-        bullets: string[];
-      }
-    | null
-  >(null);
+  const [structured, setStructured] = useState<{
+    summary: string;
+    bullets: string[];
+  } | null>(null);
   const [hasAI, setHasAI] = useState(true);
   const { polishSummary, structureJobDescription, isInitialized } = useLLM();
 
@@ -492,7 +489,9 @@ function JobDescription({
                           className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
                           onClick={handlePolishDescription}
                           disabled={
-                            !experience.description || isPolishing || !isInitialized
+                            !experience.description ||
+                            isPolishing ||
+                            !isInitialized
                           }
                         >
                           {isPolishing ? (
@@ -514,7 +513,9 @@ function JobDescription({
                           className="text-xs text-muted-foreground opacity-70 hover:opacity-100"
                           onClick={handleGenerateStructure}
                           disabled={
-                            !experience.description || isStructuring || !isInitialized
+                            !experience.description ||
+                            isStructuring ||
+                            !isInitialized
                           }
                         >
                           {isStructuring ? (
@@ -547,7 +548,9 @@ function JobDescription({
 
                 {structured && (
                   <div className="mt-3 p-4 border rounded-md bg-muted/10">
-                    <h4 className="font-medium mb-2">AI generated suggestion</h4>
+                    <h4 className="font-medium mb-2">
+                      AI generated suggestion
+                    </h4>
                     <p className="whitespace-pre-wrap">{structured.summary}</p>
                     {structured.bullets.length > 0 && (
                       <ul className="list-disc ml-6 mt-2 space-y-1">
@@ -614,12 +617,19 @@ function Experience({
   }, [resumeData.experiences]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{section.title}</h2>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+          {section.title}
+        </h2>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+          <span className="text-emerald-600 dark:text-emerald-400 text-sm">
+            💼
+          </span>
+        </div>
       </div>
 
-      <Separator className="my-4" />
+      <Separator className="bg-gradient-to-r from-emerald-200 to-blue-200 dark:from-emerald-800 dark:to-blue-800 h-px" />
 
       {resumeData.experiences.map((exp, index) => {
         // Cast to extended type for form usage
@@ -628,17 +638,25 @@ function Experience({
         return (
           <motion.div
             key={experience.id || index}
-            className="p-4 border rounded-md mb-4"
+            className="p-6 border border-emerald-200/50 dark:border-emerald-800/30 rounded-xl mb-6 shadow-sm hover:shadow-md transition-all duration-200"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={springConfig}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Experience {index + 1}</h3>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs border border-emerald-200 dark:border-emerald-800">
+                  {index + 1}
+                </div>
+                <h3 className="text-lg font-medium text-emerald-700 dark:text-emerald-300">
+                  Experience {index + 1}
+                </h3>
+              </div>
               <Button
                 type="button"
                 variant="destructive"
                 size="icon"
+                className="h-8 w-8 hover:scale-110 transition-transform duration-200"
                 onClick={() => removeExperience(experience.id)}
               >
                 <Trash2 className="h-4 w-4" />
@@ -692,27 +710,34 @@ function Experience({
       })}
 
       {resumeData.experiences.length === 0 && (
-        <div className="text-center p-6 border border-dashed rounded-md">
-          <p className="text-muted-foreground">No experiences added yet</p>
+        <div className="text-center p-8 border-2 border-dashed border-emerald-200/60 dark:border-emerald-800/40 rounded-xl">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-200 dark:border-emerald-800">
+            <span className="text-emerald-600 dark:text-emerald-400 text-lg">
+              💼
+            </span>
+          </div>
+          <p className="text-emerald-600 dark:text-emerald-400 font-medium mb-3">
+            No experiences added yet
+          </p>
           <Button
             type="button"
-            variant="outline"
-            className="mt-2"
+            className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105"
             onClick={handleAddExperience}
           >
+            <PlusCircle className="h-4 w-4 mr-2" />
             Add your first experience
           </Button>
         </div>
       )}
 
       {resumeData.experiences.length > 0 && (
-        <div className="flex justify-center mt-4">
+        <div className="flex justify-center mt-6">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleAddExperience}
-            className="flex items-center gap-1"
+            className="flex items-center gap-2 border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-all duration-200 hover:scale-105"
           >
             <PlusCircle className="h-4 w-4" />
             Add Experience
