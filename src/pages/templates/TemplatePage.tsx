@@ -1,174 +1,109 @@
 import { Button } from '@/components/ui/button';
 import { generateSamplePDF } from '@/lib/utils';
 import { Template, templates } from '@/templates';
-import { ArrowLeft, ArrowRight, Check, Download, Lock } from 'lucide-react';
-import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-
-
+import FilterPills, { FilterCategory } from './components/FilterPills';
+import FilterSection from './components/FilterSection';
+import SelectionPanel from './components/SelectionPanel';
+import TemplateGrid from './components/TemplateGrid';
+import TemplateHero from './components/TemplateHero';
 
 function TemplatePage() {
   const navigate = useNavigate();
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
-    templates[0].id
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null
   );
-  const [downloadingTemplate, setDownloadingTemplate] = useState<string | null>(null);
+  const [downloadingTemplate, setDownloadingTemplate] = useState<string | null>(
+    null
+  );
+  const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const handleTemplateSelect = (templateId: string) => {
     const template = templates.find((t) => t.id === templateId);
     if (template && !template.isComingSoon) {
-      setSelectedTemplateId(templateId);
+      setSelectedTemplateId(
+        selectedTemplateId === templateId ? null : templateId
+      );
     }
   };
 
   const handleContinue = () => {
-    navigate(`/editor?template=${selectedTemplateId}`);
+    if (selectedTemplateId) {
+      navigate(`/editor?template=${selectedTemplateId}`);
+    }
   };
 
   const handleDownloadSample = (template: Template) => {
     generateSamplePDF(template, setDownloadingTemplate);
   };
 
+  const selectedTemplate = selectedTemplateId
+    ? templates.find((t) => t.id === selectedTemplateId) || null
+    : null;
+
+  const filteredTemplates =
+    activeFilter === 'all'
+      ? templates
+      : templates.filter((template) => template.category === activeFilter);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-green-500/10 to-teal-500/10 rounded-full blur-3xl animate-float animation-delay-2000" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-orange-500/5 to-pink-500/5 rounded-full blur-3xl animate-float animation-delay-4000" />
+      </div>
+
+      <div className="relative container mx-auto px-4 py-8 pb-32">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Button>
-        </div>
-
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold">Choose a Template</h1>
-            <p className="text-muted-foreground">
-              Select from our collection of professional templates - all completely free
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {templates.map((template) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                isSelected={selectedTemplateId === template.id}
-                onSelect={handleTemplateSelect}
-                onDownloadSample={handleDownloadSample}
-                isDownloading={downloadingTemplate === template.id}
-              />
-            ))}
-          </div>
-
-          <div className="flex justify-center mt-12">
-            <Button size="lg" onClick={handleContinue} className="px-8">
-              Continue
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface TemplateCardProps {
-  template: Template;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-  onDownloadSample: (template: Template) => void;
-  isDownloading: boolean;
-}
-
-function TemplateCard({ 
-  template, 
-  isSelected, 
-  onSelect, 
-  onDownloadSample, 
-  isDownloading 
-}: TemplateCardProps) {
-  return (
-    <div
-      className={`
-        border rounded-lg overflow-hidden transition-all duration-200
-        ${
-          isSelected
-            ? 'ring-2 ring-primary ring-offset-2'
-            : 'hover:border-primary/50'
-        }
-        ${
-          template.isComingSoon
-            ? 'opacity-60 cursor-not-allowed'
-            : 'cursor-pointer'
-        }
-      `}
-    >
-      <div 
-        className="relative aspect-[3/4] bg-zinc-100 dark:bg-zinc-800"
-        onClick={() => onSelect(template.id)}
-      >
-        {/* Template Thumbnail */}
-        <img
-          src={template.thumbnail}
-          alt={`${template.name} template`}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-
-        {/* Coming Soon overlay */}
-        {template.isComingSoon && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center">
-            <Lock className="h-8 w-8 text-muted-foreground mb-2" />
-            <span className="text-sm font-medium">Coming Soon</span>
-          </div>
-        )}
-
-        {/* Selected indicator */}
-        {isSelected && !template.isComingSoon && (
-          <div className="absolute top-2 right-2">
-            <div className="bg-primary text-primary-foreground rounded-full p-1">
-              <Check className="h-4 w-4" />
-            </div>
-          </div>
-        )}
-
-        {/* Download Sample Button */}
-        {!template.isComingSoon && (
-          <div className="absolute bottom-2 left-2 right-2">
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              className="w-full bg-background/90 backdrop-blur-sm hover:bg-background/95 text-xs cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDownloadSample(template);
-              }}
-              disabled={isDownloading}
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 cursor-pointer"
             >
-              {isDownloading ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="w-3 h-3 mr-2" />
-                  Download Sample
-                </>
-              )}
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
             </Button>
-          </div>
-        )}
+          </motion.div>
+
+          <TemplateHero />
+          <FilterSection />
+          <FilterPills
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
+          <TemplateGrid
+            templates={templates}
+            filteredTemplates={filteredTemplates}
+            selectedTemplateId={selectedTemplateId}
+            downloadingTemplate={downloadingTemplate}
+            onTemplateSelect={handleTemplateSelect}
+            onDownloadSample={handleDownloadSample}
+            onFilterChange={setActiveFilter}
+          />
+        </div>
       </div>
 
-      <div className="p-4" onClick={() => onSelect(template.id)}>
-        <h3 className="font-semibold mb-1">{template.name}</h3>
-        <p className="text-sm text-muted-foreground">{template.description}</p>
-      </div>
+      <SelectionPanel
+        selectedTemplate={selectedTemplate}
+        downloadingTemplate={downloadingTemplate}
+        onDownloadSample={handleDownloadSample}
+        onContinue={handleContinue}
+      />
     </div>
   );
 }

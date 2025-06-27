@@ -93,21 +93,40 @@ function PersonalInfo({
   };
 
   return (
-    <div key={section.id} className="space-y-4">
-      <h2 className="text-2xl font-bold">{section.title}</h2>
-      <Separator className="my-4" />
+    <div key={section.id} className="space-y-6">
+      <div className="flex items-center gap-3">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          {section.title}
+        </h2>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center border border-blue-200 dark:border-blue-800">
+          <span className="text-blue-600 dark:text-blue-400 text-sm">👤</span>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Separator className="bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-800 dark:to-purple-800 h-px" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {section.fields
           .filter((f) => f.id !== 'summary')
-          .map((field) => (
+          .map((field, index) => (
             <FormField
               key={field.id}
               control={form.control}
               name={`personalInfo.${field.id}` as FormPath}
               render={({ field: formField }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center">
+                <FormItem className="group">
+                  <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+                    <div
+                      className={`w-2 h-2 rounded-full bg-gradient-to-r ${
+                        index % 4 === 0
+                          ? 'from-blue-400 to-blue-500'
+                          : index % 4 === 1
+                          ? 'from-emerald-400 to-emerald-500'
+                          : index % 4 === 2
+                          ? 'from-purple-400 to-purple-500'
+                          : 'from-pink-400 to-pink-500'
+                      }`}
+                    />
                     {field.label}
                     {field.required && (
                       <span className="text-red-500 ml-1">*</span>
@@ -128,9 +147,10 @@ function PersonalInfo({
                       onBlur={formField.onBlur}
                       name={formField.name}
                       ref={formField.ref}
+                      className="border-slate-200 dark:border-slate-700 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-600"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -145,9 +165,10 @@ function PersonalInfo({
             control={form.control}
             name={`personalInfo.summary` as FormPath}
             render={({ field: formField }) => (
-              <FormItem>
+              <FormItem className="p-6 rounded-xl border border-blue-200/30 dark:border-blue-800/20">
                 <div className="flex justify-between items-center">
-                  <FormLabel className="flex items-center">
+                  <FormLabel className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500" />
                     {field.label}
                     {field.required && (
                       <span className="text-red-500 ml-1">*</span>
@@ -157,7 +178,7 @@ function PersonalInfo({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-xs h-7 px-2 text-muted-foreground opacity-70 hover:opacity-100"
+                      className="text-xs h-8 px-3 border border-purple-200/50 dark:border-purple-800/50 text-purple-700 dark:text-purple-300 transition-all duration-200 hover:scale-105 hover:border-purple-300 dark:hover:border-purple-700"
                       type="button"
                       onClick={handlePolishSummary}
                       disabled={
@@ -167,12 +188,11 @@ function PersonalInfo({
                       {isPolishingSummary ? (
                         <>
                           <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Working on it...
+                          Working magic...
                         </>
                       ) : (
                         <>
-                          <ZapIcon className="h-3 w-3 mr-1" />
-                          Enhance with AI
+                          <ZapIcon className="h-3 w-3 mr-1" />✨ Enhance with AI
                         </>
                       )}
                     </Button>
@@ -181,7 +201,7 @@ function PersonalInfo({
                 <FormControl>
                   <Textarea
                     placeholder={field.placeholder}
-                    className="min-h-32"
+                    className="min-h-32 border-blue-200/50 dark:border-blue-800/50 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all duration-200"
                     value={(formField.value as string) || ''}
                     onChange={(e) => {
                       formField.onChange(e);
@@ -196,16 +216,18 @@ function PersonalInfo({
                     disabled={isPolishingSummary}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-500" />
 
+                {/* Text comparison component */}
                 {polishedSummary && (
-                  <TextComparison
-                    originalText={resumeData.personalInfo.summary || ''}
-                    enhancedText={polishedSummary}
-                    onAccept={handleAcceptPolishedSummary}
-                    onReject={handleRejectPolishedSummary}
-                    className="mt-3"
-                  />
+                  <div className="mt-4 p-4 border border-green-200/50 dark:border-green-800/50 rounded-lg">
+                    <TextComparison
+                      originalText={formField.value as string}
+                      enhancedText={polishedSummary}
+                      onAccept={handleAcceptPolishedSummary}
+                      onReject={handleRejectPolishedSummary}
+                    />
+                  </div>
                 )}
               </FormItem>
             )}
